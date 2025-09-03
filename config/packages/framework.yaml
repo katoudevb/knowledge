@@ -3,10 +3,12 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
-
-    #esi: true
-    #fragments: true
+    session: 
+        enabled: true
+        # pour dev, cookie_samesite lax est recommandé
+        cookie_samesite: lax
+        # cookie_secure auto pour HTTPS / HTTP
+        cookie_secure: auto
 
 when@test:
     framework:

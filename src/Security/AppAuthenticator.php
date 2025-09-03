@@ -6,7 +6,7 @@ use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
@@ -14,7 +14,6 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
-use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 class AppAuthenticator extends AbstractLoginFormAuthenticator
@@ -23,39 +22,51 @@ class AppAuthenticator extends AbstractLoginFormAuthenticator
 
     public const LOGIN_ROUTE = 'app_login';
 
-    public function __construct(
-        private UrlGeneratorInterface $urlGenerator,
-        private RequestStack $requestStack
-    ) {}
+    public function __construct(private UrlGeneratorInterface $urlGenerator)
+    {
+    }
 
     public function authenticate(Request $request): Passport
     {
-        $email = $request->get('email', '');
-        $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $email);
+        $email = $request->request->get('email', '');
+        $password = $request->request->get('password', '');
+
+        $request->getSession()->set('_security.last_username', $email);
 
         return new Passport(
             new UserBadge($email),
-            new PasswordCredentials($request->get('password', '')),
+            new PasswordCredentials($password),
             [
-                new CsrfTokenBadge('authenticate', $request->get('_csrf_token')),
+                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
             ]
         );
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        /** @var User $user */
         $user = $token->getUser();
 
+        // Redirection vers la page précédente si elle existe
+        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+            return new RedirectResponse($targetPath);
+        }
+
+        // Vérifie si l’utilisateur a validé son email
         if ($user instanceof User && !$user->isVerified()) {
-            // Redirection vers login sans flash
+            $session = $request->getSession();
+            if ($session instanceof Session) {
+                $session->getFlashBag()->add('warning', 'Please verify your email before logging in.');
+            }
             return new RedirectResponse($this->urlGenerator->generate(self::LOGIN_ROUTE));
         }
 
-        // Redirection selon rôle
+        // Redirection selon le rôle
         if ($user instanceof User && in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return new RedirectResponse($this->urlGenerator->generate('admin_dashboard'));
         }
 
+        // Redirection par défaut pour un utilisateur normal
         return new RedirectResponse($this->urlGenerator->generate('app_home'));
     }
 
