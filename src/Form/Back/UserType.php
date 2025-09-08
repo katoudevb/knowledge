@@ -13,6 +13,7 @@ class UserType extends AbstractType
     {
         $builder
             ->add('email')
+            # ->add('roles') evite l'erreur “Array to string conversion”.
             ->add('password')
             ->add('isVerified')
         ;
