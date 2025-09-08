@@ -31,7 +31,9 @@ class AppAuthenticator extends AbstractLoginFormAuthenticator
         $email = $request->request->get('email', '');
         $password = $request->request->get('password', '');
 
+        // Stocke le dernier username pour l'affichage dans le formulaire
         $request->getSession()->set('_security.last_username', $email);
+
 
         return new Passport(
             new UserBadge($email),
@@ -53,11 +55,10 @@ class AppAuthenticator extends AbstractLoginFormAuthenticator
         }
 
         // Vérifie si l’utilisateur a validé son email
+        /** @var Session $session */
+        $session = $request->getSession();
         if ($user instanceof User && !$user->isVerified()) {
-            $session = $request->getSession();
-            if ($session instanceof Session) {
-                $session->getFlashBag()->add('warning', 'Please verify your email before logging in.');
-            }
+            $session->getFlashBag()->add('warning', 'Please verify your email before logging in.');
             return new RedirectResponse($this->urlGenerator->generate(self::LOGIN_ROUTE));
         }
 

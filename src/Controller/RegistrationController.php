@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use Symfony\Component\Mailer\MailerInterface;
 use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
 use App\Security\EmailVerifier;
@@ -24,7 +25,7 @@ class RegistrationController extends AbstractController
     }
 
     #[Route('/register', name: 'app_register')]
-    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
+    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, MailerInterface $mailer): Response
     {
         $user = new User();
         $form = $this->createForm(RegistrationFormType::class, $user);
@@ -40,14 +41,14 @@ class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            // generate a signed url and email it to the user
-            $this->emailVerifier->sendEmailConfirmation('app_verify_email', $user,
-                (new TemplatedEmail())
-                    ->from(new Address('noreply@knowledge.com', 'Knowledge Learning'))
-                    ->to((string) $user->getEmail())
-                    ->subject('Veuillez confirmer votre adresse e-mail')
-                    ->htmlTemplate('registration/confirmation_email.html.twig')
-            );
+        // generate a signed url and email it to the user
+        $this->emailVerifier->sendEmailConfirmation('app_verify_email', $user,
+            (new TemplatedEmail())
+                ->from(new Address('noreply@knowledge.com', 'Knowledge Learning'))
+                ->to((string) $user->getEmail())
+                ->subject('Veuillez confirmer votre adresse e-mail')
+                ->htmlTemplate('registration/confirmation_email.html.twig')
+        );
 
             // do anything else you need here, like send an email
 
