@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use App\Entity\Course;
@@ -19,6 +18,7 @@ class FrontController extends AbstractController
 {
     // -----------------------------
     // Page d'accueil / liste des thèmes
+    // Accessible à tous
     // -----------------------------
     #[Route('', name: 'home')]
     #[Route('themes', name: 'themes')]
@@ -30,24 +30,65 @@ class FrontController extends AbstractController
 
     // -----------------------------
     // Affichage d’un cours et ses leçons
+    // Accessible uniquement aux utilisateurs connectés
     // -----------------------------
     #[Route('courses/{id}', name: 'courses')]
-    public function courses(Course $course): Response
+    #[IsGranted('ROLE_USER')]
+    public function courses(Course $course, ?User $user = null): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérification que l'utilisateur a acheté le cours ou une leçon
+        $hasAccess = false;
+        foreach ($course->getPurchases() as $purchase) {
+            if ($purchase->getUser() === $user) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
+            $this->addFlash('error', 'Vous devez acheter ce cours pour y accéder.');
+            return $this->redirectToRoute('front_themes');
+        }
+
         return $this->render('front/courses.html.twig', compact('course'));
     }
 
     // -----------------------------
     // Affichage d’une leçon
+    // Accessible uniquement aux utilisateurs connectés
     // -----------------------------
     #[Route('lessons/{id}', name: 'lessons')]
+    #[IsGranted('ROLE_USER')]
     public function lessons(Lesson $lesson): Response
     {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur et vérification de la leçon
-        // -----------------------------
         /** @var User $user */
         $user = $this->getUser();
+
+        $hasAccess = false;
+
+        foreach ($lesson->getPurchases() as $purchase) {
+            if ($purchase->getUser() === $user) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        // Vérification si l'utilisateur a acheté le cours global
+        foreach ($lesson->getCourse()->getPurchases() as $purchase) {
+            if ($purchase->getUser() === $user) {
+                $hasAccess = true;
+                break;
+            }
+        }
+
+        if (!$hasAccess) {
+            $this->addFlash('error', 'Vous n’avez pas accès à cette leçon.');
+            return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
+        }
+
         $validated = $user->hasValidatedLesson($lesson);
 
         return $this->render('front/lessons.html.twig', [
@@ -57,17 +98,19 @@ class FrontController extends AbstractController
     }
 
     // -----------------------------
-    // Achat sandbox
+    // Achat sandbox : le compte doit être activé
     // -----------------------------
     #[Route('purchase/{type}/{id}', name: 'purchase')]
     #[IsGranted('ROLE_USER')]
     public function purchase(EntityManagerInterface $em, string $type, int $id): Response
     {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur
-        // -----------------------------
         /** @var User $user */
         $user = $this->getUser();
+
+        if (!$user->getIsVerified()) {
+            $this->addFlash('error', 'Vous devez vérifier votre email pour effectuer un achat.');
+            return $this->redirectToRoute('front_themes');
+        }
 
         $item = match($type) {
             'course' => $em->getRepository(Course::class)->find($id),
@@ -81,15 +124,7 @@ class FrontController extends AbstractController
         }
 
         $purchase = new Purchase();
-        $purchase->setUser($user)
-                 ->setCreatedAt(new \DateTimeImmutable());
-
-        if ($type === 'course') {
-            $purchase->setCourse($item);
-        } else {
-            $purchase->setLesson($item);
-        }
-
+        $purchase->sandboxPurchase($user, $item); // utilise la méthode sandboxPurchase de l'entité
         $em->persist($purchase);
         $em->flush();
 
@@ -98,15 +133,12 @@ class FrontController extends AbstractController
     }
 
     // -----------------------------
-    // Validation d’une leçon
+    // Validation d’une leçon par l’utilisateur
     // -----------------------------
     #[Route('validate-lesson/{id}', name: 'validate_lesson')]
     #[IsGranted('ROLE_USER')]
     public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
     {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur
-        // -----------------------------
         /** @var User $user */
         $user = $this->getUser();
 
@@ -125,9 +157,7 @@ class FrontController extends AbstractController
         $em->persist($userLesson);
         $em->flush();
 
-        // -----------------------------
-        // AJOUT : Vérification si toutes les leçons du cours sont validées
-        // -----------------------------
+        // Vérification si toutes les leçons du cours sont validées
         $allValidated = true;
         foreach ($lesson->getCourse()->getLessons() as $l) {
             if (!$user->hasValidatedLesson($l)) {
@@ -146,21 +176,16 @@ class FrontController extends AbstractController
     }
 
     // -----------------------------
-    // Récapitulatif des certifications
+    // Récapitulatif des certifications de l'utilisateur
     // -----------------------------
     #[Route('certifications', name: 'certifications')]
     #[IsGranted('ROLE_USER')]
     public function certifications(): Response
     {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur
-        // -----------------------------
         /** @var User $user */
         $user = $this->getUser();
         $certifications = $user->getFrontCertifications();
 
-        return $this->render('front/certifications.html.twig', [
-            'certifications' => $certifications,
-        ]);
+        return $this->render('front/certifications.html.twig', compact('certifications'));
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Controller\Back;
 
 use App\Entity\Course;
-use App\Form\CourseType;
+use App\Form\Back\CourseType;
 use App\Repository\CourseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
