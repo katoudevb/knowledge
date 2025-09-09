@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes certifications{% endblock %}
+
+{% block body %}
+<h1>🏆 Mes certifications</h1>
+
+    <div class="certification-list">
+        {# Contenu à remplir plus tard #}
+    </div>
+
+<ul>
+    {% for course in certifications %}
+        <li>{{ course.title }}</li>
+    {% else %}
+        <li>Vous n'avez encore validé aucun cours.</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ path('front_themes') }}">← Retour aux thèmes</a>
+{% endblock %}

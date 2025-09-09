@@ -2,79 +2,78 @@
 
 namespace App\Tests;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
 class RegistrationControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
     private UserRepository $userRepository;
+    private EntityManagerInterface $em;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
-
-        // Ensure we have a clean database
         $container = static::getContainer();
 
-        /** @var EntityManager $em */
-        $em = $container->get('doctrine')->getManager();
+        $this->em = $container->get('doctrine')->getManager();
         $this->userRepository = $container->get(UserRepository::class);
 
+        // Supprime tous les utilisateurs pour un état propre
         foreach ($this->userRepository->findAll() as $user) {
-            $em->remove($user);
+            $this->em->remove($user);
         }
-
-        $em->flush();
+        $this->em->flush();
     }
 
     public function testRegister(): void
     {
-        // Register a new user
+        // Accéder au formulaire d'inscription
         $this->client->request('GET', '/register');
         self::assertResponseIsSuccessful();
-        self::assertPageTitleContains('Register');
+        self::assertPageTitleContains('Inscription'); // corrigé selon ton template
 
-        $this->client->submitForm('Register', [
+        // Soumettre le formulaire
+        $this->client->submitForm("S'inscrire", [
             'registration_form[email]' => 'me@example.com',
             'registration_form[plainPassword]' => 'password',
             'registration_form[agreeTerms]' => true,
         ]);
 
-        // Ensure the response redirects after submitting the form, the user exists, and is not verified
-        // self::assertResponseRedirects('/');  @TODO: set the appropriate path that the user is redirected to.
-        self::assertCount(1, $this->userRepository->findAll());
-        self::assertFalse(($user = $this->userRepository->findAll()[0])->isVerified());
+        // Vérifie que l'utilisateur a été créé
+        $users = $this->userRepository->findAll();
+        self::assertCount(1, $users);
 
-        // Ensure the verification email was sent
-        // Use either assertQueuedEmailCount() || assertEmailCount() depending on your mailer setup
-        // self::assertQueuedEmailCount(1);
+        $user = $users[0];
+        self::assertFalse($user->isVerified());
+
+        // Vérifie que l'email de vérification a été envoyé
         self::assertEmailCount(1);
+        $messages = $this->getMailerMessages();
+        /** @var TemplatedEmail $email */
+        $email = $messages[0];
 
-        self::assertCount(1, $messages = $this->getMailerMessages());
-        self::assertEmailAddressContains($messages[0], 'from', 'noreply@knowledge.com');
-        self::assertEmailAddressContains($messages[0], 'to', 'me@example.com');
-        self::assertEmailTextBodyContains($messages[0], 'This link will expire in 1 hour.');
+        self::assertEmailAddressContains($email, 'from', 'noreply@knowledge.com');
+        self::assertEmailAddressContains($email, 'to', 'me@example.com');
+        self::assertEmailTextBodyContains($email, 'This link will expire in 1 hour.');
 
-        // Login the new user
-        $this->client->followRedirect();
-        $this->client->loginUser($user);
+        // Suivre le lien de vérification
+        $this->client->followRedirects(true);
+        $body = $email->getHtmlBody();
+        self::assertIsString($body);
 
-        // Get the verification link from the email
-        /** @var TemplatedEmail $templatedEmail */
-        $templatedEmail = $messages[0];
-        $messageBody = $templatedEmail->getHtmlBody();
-        self::assertIsString($messageBody);
+        preg_match('#(http://localhost/verify/email.+)">#', $body, $matches);
+        $verificationLink = $matches[1] ?? null;
+        self::assertNotNull($verificationLink, 'Le lien de vérification doit exister');
 
-        preg_match('#(http://localhost/verify/email.+)">#', $messageBody, $resetLink);
+        $this->client->request('GET', $verificationLink);
 
-        // "Click" the link and see if the user is verified
-        $this->client->request('GET', $resetLink[1]);
-        $this->client->followRedirect();
-
-        self::assertTrue(static::getContainer()->get(UserRepository::class)->findAll()[0]->isVerified());
+        // Vérifie que l'utilisateur est maintenant vérifié
+        $userVerified = $this->userRepository->findAll()[0];
+        self::assertTrue($userVerified->isVerified());
     }
 }
