@@ -41,6 +41,9 @@ class Lesson
     #[ORM\OneToMany(targetEntity: UserLesson::class, mappedBy: 'lesson', orphanRemoval: true)]
     private Collection $userLessons;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $videoUrl = null;
+
     public function __construct()
     {
         $this->purchases = new ArrayCollection();
@@ -156,6 +159,18 @@ class Lesson
                 $userLesson->setLesson(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getVideoUrl(): ?string
+    {
+        return $this->videoUrl;
+    }
+
+    public function setVideoUrl(?string $videoUrl): static
+    {
+        $this->videoUrl = $videoUrl;
 
         return $this;
     }

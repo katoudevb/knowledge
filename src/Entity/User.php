@@ -47,6 +47,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    private ?self $createdBy = null;
+
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    private ?self $updatedBy = null;
+
     public function __construct()
     {
         $this->purchases = new ArrayCollection();
@@ -244,6 +253,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?self
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?self $createdBy): static
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getUpdatedBy(): ?self
+    {
+        return $this->updatedBy;
+    }
+
+    public function setUpdatedBy(?self $updatedBy): static
+    {
+        $this->updatedBy = $updatedBy;
+
         return $this;
     }
 }
