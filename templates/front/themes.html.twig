@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Thèmes{% endblock %}
+
+{% block body %}
+<h1>📚 Thèmes disponibles</h1>
+
+<ul>
+    {% for theme in themes %}
+        <li>
+            <a href="{{ path('front_courses', {'id': theme.id}) }}">{{ theme.name }}</a>
+        </li>
+    {% else %}
+        <li>Aucun thème disponible pour le moment.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

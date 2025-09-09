@@ -35,9 +35,16 @@ class Lesson
     #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'lesson')]
     private Collection $purchases;
 
+    /**
+     * @var Collection<int, UserLesson>
+     */
+    #[ORM\OneToMany(targetEntity: UserLesson::class, mappedBy: 'lesson', orphanRemoval: true)]
+    private Collection $userLessons;
+
     public function __construct()
     {
         $this->purchases = new ArrayCollection();
+        $this->userLessons = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -117,6 +124,36 @@ class Lesson
             // set the owning side to null (unless already changed)
             if ($purchase->getLesson() === $this) {
                 $purchase->setLesson(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserLesson>
+     */
+    public function getUserLessons(): Collection
+    {
+        return $this->userLessons;
+    }
+
+    public function addUserLesson(UserLesson $userLesson): static
+    {
+        if (!$this->userLessons->contains($userLesson)) {
+            $this->userLessons->add($userLesson);
+            $userLesson->setLesson($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserLesson(UserLesson $userLesson): static
+    {
+        if ($this->userLessons->removeElement($userLesson)) {
+            // set the owning side to null (unless already changed)
+            if ($userLesson->getLesson() === $this) {
+                $userLesson->setLesson(null);
             }
         }
 

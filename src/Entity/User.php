@@ -23,37 +23,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180)]
     private ?string $email = null;
 
-    /**
-     * @var list<string> The user roles
-     */
     #[ORM\Column]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column]
     private ?string $password = null;
 
     #[ORM\Column]
     private ?bool $isVerified = false;
 
-    /**
-     * @var Collection<int, Purchase>
-     */
     #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'user')]
     private Collection $purchases;
 
-    /**
-     * @var Collection<int, Certification>
-     */
     #[ORM\OneToMany(targetEntity: Certification::class, mappedBy: 'user')]
     private Collection $certifications;
+
+    #[ORM\OneToMany(targetEntity: UserLesson::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $userLessons;
+
+    // -----------------------------
+    // AJOUT : createdAt pour User
+    // -----------------------------
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
     {
         $this->purchases = new ArrayCollection();
         $this->certifications = new ArrayCollection();
+        $this->userLessons = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -69,45 +67,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -116,33 +96,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
-    /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
-     */
     public function __serialize(): array
     {
         $data = (array) $this;
         $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
-
         return $data;
     }
 
     #[\Deprecated]
-    public function eraseCredentials(): void
-    {
-        // @deprecated, to be removed when upgrading to Symfony 8
-    }
+    public function eraseCredentials(): void {}
 
     public function isVerified(): ?bool
     {
         return $this->isVerified;
     }
 
-        public function getIsVerified(): ?bool
+    public function getIsVerified(): ?bool
     {
         return $this->isVerified;
     }
@@ -150,13 +122,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
-
         return $this;
     }
-    
-    /**
-     * @return Collection<int, Purchase>
-     */
+
+    // -----------------------------
+    // Purchases
+    // -----------------------------
     public function getPurchases(): Collection
     {
         return $this->purchases;
@@ -168,25 +139,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->purchases->add($purchase);
             $purchase->setUser($this);
         }
-
         return $this;
     }
 
     public function removePurchase(Purchase $purchase): static
     {
-        if ($this->purchases->removeElement($purchase)) {
-            // set the owning side to null (unless already changed)
-            if ($purchase->getUser() === $this) {
-                $purchase->setUser(null);
-            }
+        if ($this->purchases->removeElement($purchase) && $purchase->getUser() === $this) {
+            $purchase->setUser(null);
         }
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, Certification>
-     */
+    // -----------------------------
+    // Certifications
+    // -----------------------------
     public function getCertifications(): Collection
     {
         return $this->certifications;
@@ -198,19 +164,86 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->certifications->add($certification);
             $certification->setUser($this);
         }
-
         return $this;
     }
 
     public function removeCertification(Certification $certification): static
     {
-        if ($this->certifications->removeElement($certification)) {
-            // set the owning side to null (unless already changed)
-            if ($certification->getUser() === $this) {
-                $certification->setUser(null);
+        if ($this->certifications->removeElement($certification) && $certification->getUser() === $this) {
+            $certification->setUser(null);
+        }
+        return $this;
+    }
+
+    // -----------------------------
+    // UserLessons
+    // -----------------------------
+    public function getUserLessons(): Collection
+    {
+        return $this->userLessons;
+    }
+
+    public function addUserLesson(UserLesson $userLesson): static
+    {
+        if (!$this->userLessons->contains($userLesson)) {
+            $this->userLessons->add($userLesson);
+            $userLesson->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeUserLesson(UserLesson $userLesson): static
+    {
+        if ($this->userLessons->removeElement($userLesson) && $userLesson->getUser() === $this) {
+            $userLesson->setUser(null);
+        }
+        return $this;
+    }
+
+    // -----------------------------
+    // AJOUT FRONT : méthodes utiles pour le FrontController
+    // -----------------------------
+    public function hasValidatedLesson(Lesson $lesson): bool
+    {
+        foreach ($this->userLessons as $userLesson) {
+            if ($userLesson->getLesson() === $lesson && $userLesson->isValidated()) {
+                return true;
             }
         }
+        return false;
+    }
 
+    public function getFrontCertifications(): Collection
+    {
+        return $this->certifications;
+    }
+
+    public function addFrontCertificationFromCourse(Course $course): static
+    {
+        foreach ($this->certifications as $cert) {
+            if ($cert->getCourse() === $course) return $this;
+        }
+
+        $certification = new Certification();
+        $certification->setUser($this);
+        $certification->setCourse($course);
+        $certification->setObtainedAt(new \DateTimeImmutable());
+
+        $this->certifications->add($certification);
+        return $this;
+    }
+
+    // -----------------------------
+    // createdAt getter/setter
+    // -----------------------------
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
         return $this;
     }
 }

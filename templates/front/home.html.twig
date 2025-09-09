@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block body %}
+<h1>🎓 Bienvenue sur la plateforme de formation</h1>
+<p>Choisissez un thème pour explorer les cours disponibles :</p>
+
+<div class="themes-list">
+    {% for theme in themes %}
+        <div class="theme-card">
+            <h2>{{ theme.name }}</h2>
+            <p>{{ theme.description ?: 'Aucune description disponible.' }}</p>
+            <a href="{{ path('front_courses', {'id': theme.id}) }}" class="btn btn-primary">Voir les cours</a>
+        </div>
+    {% else %}
+        <p>Aucun thème disponible pour le moment.</p>
+    {% endfor %}
+</div>
+{% endblock %}

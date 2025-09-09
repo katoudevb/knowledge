@@ -39,7 +39,6 @@ class Purchase
     public function setUser(?User $user): static
     {
         $this->user = $user;
-
         return $this;
     }
 
@@ -51,7 +50,6 @@ class Purchase
     public function setCourse(?Course $course): static
     {
         $this->course = $course;
-
         return $this;
     }
 
@@ -63,7 +61,6 @@ class Purchase
     public function setLesson(?Lesson $lesson): static
     {
         $this->lesson = $lesson;
-
         return $this;
     }
 
@@ -75,7 +72,26 @@ class Purchase
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
-
         return $this;
+    }
+
+    // -----------------------------
+    // AJOUT : méthode sandboxPurchase
+    // -----------------------------
+    public function sandboxPurchase(User $user, $courseOrLesson): void
+    {
+        $this->user = $user;
+
+        if ($courseOrLesson instanceof Course) {
+            $this->course = $courseOrLesson;
+            $this->lesson = null;
+        } elseif ($courseOrLesson instanceof Lesson) {
+            $this->lesson = $courseOrLesson;
+            $this->course = null;
+        } else {
+            throw new \InvalidArgumentException('Item must be Course or Lesson.');
+        }
+
+        $this->createdAt = new \DateTimeImmutable();
     }
 }

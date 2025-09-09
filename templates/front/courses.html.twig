@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cours: {{ course.title }}{% endblock %}
+
+{% block body %}
+<h1>📖 Cours : {{ course.title }}</h1>
+
+<p>{{ course.description }}</p>
+
+<h2>Leçons</h2>
+<ul>
+    {% for lesson in course.lessons %}
+        <li>
+            <a href="{{ path('front_lessons', {'id': lesson.id}) }}">{{ lesson.title }}</a>
+        </li>
+    {% else %}
+        <li>Aucune leçon disponible.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
