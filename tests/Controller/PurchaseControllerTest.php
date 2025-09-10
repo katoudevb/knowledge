@@ -5,40 +5,26 @@ namespace App\Tests\Controller;
 use App\Entity\User;
 use App\Entity\Course;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\TestHelpers;
 
 class PurchaseControllerTest extends WebTestCase
 {
-    private function createTestUser(): User
+    use TestHelpers;
+    
+    protected function setUp(): void
     {
-        $container = static::getContainer();
-        $em = $container->get('doctrine')->getManager();
-        $passwordHasher = $container->get('security.password_hasher');
-
-        $user = new User();
-        $user->setEmail('testuser@example.com');
-        $user->setPassword(
-            $passwordHasher->hashPassword($user, 'password')
-        );
-        $user->setRoles(['ROLE_USER']);
-
-        $em->persist($user);
-        $em->flush();
-
-        return $user;
+        $this->initTest(); 
     }
 
     public function testPurchaseCourse(): void
     {
-        $client = static::createClient();
-        $user = $this->createTestUser();
-        $client->loginUser($user);
+        $user = $this->createUser();
+        $this->client->loginUser($user);
 
-        $course = static::getContainer()->get('doctrine')
-            ->getRepository(Course::class)
-            ->findOneBy([]);
+        $course = $this->em->getRepository(Course::class)->findOneBy([]);
+        $this->purchaseCourse($user, $course, 100);
 
-        $client->request('GET', '/purchase/course/'.$course->getId());
-
-        $this->assertResponseRedirects('/themes'); // Vérifie la redirection après achat
+        $this->client->request('GET', '/purchase/course/'.$course->getId());
+        $this->assertResponseRedirects('/themes');
     }
 }

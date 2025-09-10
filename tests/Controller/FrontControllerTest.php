@@ -4,59 +4,39 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Entity\Lesson;
+use App\Entity\Purchase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\TestHelpers;
 
 class FrontControllerTest extends WebTestCase
 {
-    private function createUser(?string $email = null): User
+    use TestHelpers;
+    
+    protected function setUp(): void
     {
-        $container = static::getContainer();
-        $em = $container->get('doctrine')->getManager();
-
-        $userRepo = $container->get(\App\Repository\UserRepository::class);
-
-        $email = $email ?? 'user_' . uniqid() . '@example.com';
-
-        // Supprime si l’utilisateur existe déjà
-        $existing = $userRepo->findOneBy(['email' => $email]);
-        if ($existing) {
-            $em->remove($existing);
-            $em->flush();
-        }
-
-        $user = new User();
-        $user->setEmail($email)
-             ->setPassword(password_hash('password', PASSWORD_BCRYPT));
-
-        $em->persist($user);
-        $em->flush();
-
-        return $user;
+        $this->initTest(); // ✅ initialise $client et $em avant chaque test
     }
 
     public function testAccessLesson(): void
     {
-        $client = static::createClient();
         $user = $this->createUser();
-        $client->loginUser($user);
+        $this->client->loginUser($user);
 
-        $lesson = static::getContainer()->get('doctrine')
-            ->getRepository(Lesson::class)
-            ->findOneBy([]);
+        $lesson = $this->em->getRepository(Lesson::class)->findOneBy([]);
+        $this->purchaseLesson($user, $lesson, 100);
 
-        $client->request('GET', '/lessons/'.$lesson->getId());
+        $this->client->request('GET', '/lessons/'.$lesson->getId());
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('h1'); // Vérifie le titre de la leçon
+        $this->assertSelectorTextContains('h1', $lesson->getTitle());
     }
 
     public function testCertificationsPage(): void
     {
-        $client = static::createClient();
         $user = $this->createUser();
-        $client->loginUser($user);
+        $this->client->loginUser($user);
 
-        $client->request('GET', '/certifications');
+        $this->client->request('GET', '/certifications');
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.certification-list'); // Classe CSS de ton template
+        $this->assertSelectorExists('.certification-list');
     }
 }

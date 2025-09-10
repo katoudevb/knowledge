@@ -81,23 +81,25 @@ class Purchase
     // -----------------------------
     // AJOUT : méthode sandboxPurchase
     // -----------------------------
-    public function sandboxPurchase(User $user, $courseOrLesson): void
+        public function sandboxPurchase(User $user, $courseOrLesson, ?float $amount = null): void
     {
         $this->user = $user;
 
         if ($courseOrLesson instanceof Course) {
             $this->course = $courseOrLesson;
             $this->lesson = null;
+            $this->amount = $amount ?? $courseOrLesson->getPrice();
         } elseif ($courseOrLesson instanceof Lesson) {
             $this->lesson = $courseOrLesson;
             $this->course = null;
+            $this->amount = $amount ?? $courseOrLesson->getPrice();
         } else {
             throw new \InvalidArgumentException('Item must be Course or Lesson.');
         }
 
         $this->createdAt = new \DateTimeImmutable();
     }
-
+    
     public function getAmount(): ?float
     {
         return $this->amount;

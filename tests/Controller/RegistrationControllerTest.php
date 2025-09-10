@@ -1,45 +1,51 @@
 <?php
 
-namespace App\Tests;
+namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use App\Tests\TestHelpers;
 
 class RegistrationControllerTest extends WebTestCase
 {
-    private KernelBrowser $client;
-    private UserRepository $userRepository;
-    private EntityManagerInterface $em;
+    use TestHelpers;
+    
+    protected UserRepository $userRepository;
 
     protected function setUp(): void
     {
-        $this->client = static::createClient();
-        $container = static::getContainer();
+        // Initialise $client et $em depuis le trait
+        $this->initTest();
 
-        $this->em = $container->get('doctrine')->getManager();
-        $this->userRepository = $container->get(UserRepository::class);
+        // Récupérer UserRepository
+        $this->userRepository = static::getContainer()->get(UserRepository::class);
 
-        // Supprime tous les utilisateurs pour un état propre
-        foreach ($this->userRepository->findAll() as $user) {
-            $this->em->remove($user);
-        }
+        // Purger les entités pour un état propre
+        $this->em->createQuery('DELETE FROM App\Entity\UserLesson ul')->execute();
+        $this->em->createQuery('DELETE FROM App\Entity\Purchase p')->execute();
+        $this->em->createQuery('DELETE FROM App\Entity\User u')->execute();
         $this->em->flush();
+    }
+
+    private function generateUniqueEmail(): string
+    {
+        return 'user_' . uniqid('', true) . '@example.com';
     }
 
     public function testRegister(): void
     {
+        $email = $this->generateUniqueEmail();
+
         // Accéder au formulaire d'inscription
         $this->client->request('GET', '/register');
         self::assertResponseIsSuccessful();
-        self::assertPageTitleContains('Inscription'); // corrigé selon ton template
+        self::assertPageTitleContains('Inscription');
 
         // Soumettre le formulaire
         $this->client->submitForm("S'inscrire", [
-            'registration_form[email]' => 'me@example.com',
+            'registration_form[email]' => $email,
             'registration_form[plainPassword]' => 'password',
             'registration_form[agreeTerms]' => true,
         ]);
@@ -48,32 +54,47 @@ class RegistrationControllerTest extends WebTestCase
         $users = $this->userRepository->findAll();
         self::assertCount(1, $users);
 
+        /** @var User $user */
         $user = $users[0];
         self::assertFalse($user->isVerified());
 
-        // Vérifie que l'email de vérification a été envoyé
+        // Vérifie l'envoi d'email
         self::assertEmailCount(1);
         $messages = $this->getMailerMessages();
-        /** @var TemplatedEmail $email */
-        $email = $messages[0];
+        /** @var TemplatedEmail $emailMessage */
+        $emailMessage = $messages[0];
 
-        self::assertEmailAddressContains($email, 'from', 'noreply@knowledge.com');
-        self::assertEmailAddressContains($email, 'to', 'me@example.com');
-        self::assertEmailTextBodyContains($email, 'This link will expire in 1 hour.');
+        self::assertEmailAddressContains($emailMessage, 'from', 'noreply@knowledge.com');
+        self::assertEmailAddressContains($emailMessage, 'to', $user->getEmail());
+        self::assertEmailTextBodyContains($emailMessage, 'expirera');
+        self::assertEmailTextBodyContains($emailMessage, 'Confirmer mon e-mail');
 
-        // Suivre le lien de vérification
-        $this->client->followRedirects(true);
-        $body = $email->getHtmlBody();
-        self::assertIsString($body);
+        // Extraire le lien de vérification
+        $body = $emailMessage->getHtmlBody();
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($body);
+        libxml_clear_errors();
 
-        preg_match('#(http://localhost/verify/email.+)">#', $body, $matches);
-        $verificationLink = $matches[1] ?? null;
+        $links = $dom->getElementsByTagName('a');
+        $verificationLink = null;
+        foreach ($links as $link) {
+            $href = $link->getAttribute('href');
+            if (str_contains($href, '/verify/email')) {
+                $verificationLink = $href;
+                break;
+            }
+        }
+
         self::assertNotNull($verificationLink, 'Le lien de vérification doit exister');
 
+        // Accède au lien de vérification et suit la redirection
         $this->client->request('GET', $verificationLink);
+        $this->client->followRedirect();
 
-        // Vérifie que l'utilisateur est maintenant vérifié
-        $userVerified = $this->userRepository->findAll()[0];
-        self::assertTrue($userVerified->isVerified());
+        // Rafraîchir l’entité pour récupérer la nouvelle valeur de isVerified
+        $this->em->refresh($user);
+
+        self::assertTrue($user->isVerified());
     }
 }
