@@ -1,67 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes Certifications{% endblock %}
-
-{% block stylesheets %}
-<style>
-    .certifications-container {
-        max-width: 900px;
-        margin: 2rem auto;
-        padding: 1rem;
-    }
-    .cert-card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
-    }
-    .cert-card:hover {
-        transform: translateY(-3px);
-    }
-    .cert-info {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    .cert-logo {
-        width: 60px;
-        height: 60px;
-        object-fit: contain;
-    }
-    .cert-title {
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    .cert-date {
-        color: #666;
-        font-size: 0.9rem;
-    }
-</style>
-{% endblock %}
+{% block title %}Mes certifications{% endblock %}
 
 {% block body %}
-<div class="certifications-container">
-    <h1>Mes Certifications</h1>
+<h1>🏆 Mes certifications</h1>
 
-    {% if certifications is empty %}
-        <p>Vous n'avez encore obtenu aucune certification.</p>
+    <div class="certification-list">
+        {# Contenu à remplir plus tard #}
+    </div>
+
+<ul>
+    {% for course in certifications %}
+        <li>{{ course.title }}</li>
     {% else %}
-        {% for cert in certifications %}
-            <div class="cert-card">
-                <div class="cert-info">
-                    <img class="cert-logo" src="{{ asset('images/2.png') }}" alt="Logo Certification">
-                    <div>
-                        <div class="cert-title">{{ cert.course.title }}</div>
-                        <div class="cert-date">Obtenue le : {{ cert.createdAt ? cert.createdAt|date('d/m/Y') : 'N/A' }}</div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-</div>
+        <li>Vous n'avez encore validé aucun cours.</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ path('front_themes') }}">← Retour aux thèmes</a>
 {% endblock %}
