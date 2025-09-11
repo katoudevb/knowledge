@@ -4,58 +4,67 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Entity\Course;
+use App\Entity\Lesson;
+use App\Entity\Purchase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Tests\TestHelpers;
 
 /**
  * Functional tests for the PurchaseController.
  *
- * Verifies course purchases and related redirections for users.
+ * Verifies course and lesson purchases and related redirections for users.
  */
 class PurchaseControllerTest extends WebTestCase
 {
     use TestHelpers;
     
-    /**
-     * Sets up the client and EntityManager before each test.
-     * Calls the initTest() method from the TestHelpers trait.
-     */
     protected function setUp(): void
     {
         $this->initTest(); 
     }
 
     /**
-     * Tests purchasing a course by a logged-in user.
-     *
-     * Scenario:
-     * - Create a user.
-     * - Log in the user.
-     * - Retrieve a random course from the database.
-     * - Simulate the course purchase.
-     * - Access the course purchase confirmation page.
-     *
-     * Assertions:
-     * - Ensures the response redirects to the themes page.
-     *
-     * @return void
+     * Test purchasing a course.
      */
     public function testPurchaseCourse(): void
     {
-        // Create and log in the user
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Retrieve a random course from the database
         $course = $this->em->getRepository(Course::class)->findOneBy([]);
-
-        // Simulate the course purchase
         $this->purchaseCourse($user, $course, 100);
 
-        // Access the course purchase page
         $this->client->request('GET', '/purchase/course/'.$course->getId());
-
-        // Assertion: check redirection to themes page
         $this->assertResponseRedirects('/themes');
+
+        // Vérification via Doctrine
+        $purchase = $this->em->getRepository(Purchase::class)
+            ->findOneBy([
+                'user' => $user,
+                'course' => $course,
+            ]);
+        $this->assertNotNull($purchase, "Le cours a bien été acheté");
+    }
+
+    /**
+     * Test purchasing a lesson.
+     */
+    public function testPurchaseLesson(): void
+    {
+        $user = $this->createUser();
+        $this->client->loginUser($user);
+
+        $lesson = $this->em->getRepository(Lesson::class)->findOneBy([]);
+        $this->purchaseLesson($user, $lesson, 50);
+
+        $this->client->request('GET', '/purchase/lesson/'.$lesson->getId());
+        $this->assertResponseRedirects('/themes');
+
+        $purchase = $this->em->getRepository(Purchase::class)
+            ->findOneBy([
+                'user' => $user,
+                'lesson' => $lesson,
+            ]);
+        $this->assertNotNull($purchase, "La leçon a bien été achetée");
     }
 }

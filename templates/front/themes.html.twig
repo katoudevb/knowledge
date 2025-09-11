@@ -8,7 +8,8 @@
 <ul>
     {% for theme in themes %}
         <li>
-            <a href="{{ path('front_courses', {'id': theme.id}) }}">{{ theme.name }}</a>
+            {# On redirige vers les cours du thème #}
+            <a href="{{ path('front_theme_courses', {'id': theme.id}) }}">{{ theme.name }}</a>
         </li>
     {% else %}
         <li>Aucun thème disponible pour le moment.</li>

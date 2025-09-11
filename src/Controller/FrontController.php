@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Entity\Course;
@@ -36,6 +37,19 @@ class FrontController extends AbstractController
     {
         $themes = $em->getRepository(Theme::class)->findAll();
         return $this->render('front/themes.html.twig', compact('themes'));
+    }
+
+    /**
+     * Displays courses for a given theme.
+     *
+     * @param Theme $theme Theme entity whose courses we want to display
+     * @return Response HTTP response rendering the courses
+     */
+    #[Route('themes/{id}/courses', name: 'theme_courses')]
+    public function themeCourses(Theme $theme): Response
+    {
+        $courses = $theme->getCourses();
+        return $this->render('front/theme_courses.html.twig', compact('theme', 'courses'));
     }
 
     /**
@@ -184,7 +198,6 @@ class FrontController extends AbstractController
         }
 
         $userLesson->setValidated(true);
-                   
         $em->persist($userLesson);
         $em->flush();
 

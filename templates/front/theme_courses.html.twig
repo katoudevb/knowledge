@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cours pour le thème : {{ theme.name }}{% endblock %}
+
+{% block body %}
+<h1>📚 Cours pour le thème : {{ theme.name }}</h1>
+
+{% if theme.courses|length > 0 %}
+    <ul>
+        {% for course in theme.courses %}
+            <li>
+                <a href="{{ path('front_courses', {'id': course.id}) }}">{{ course.title }}</a>
+                - {{ course.price }} €
+                <a href="{{ path('front_purchase', {'type': 'course', 'id': course.id}) }}" class="btn btn-primary btn-sm">Acheter le cours</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Aucun cours disponible pour ce thème pour le moment.</p>
+{% endif %}
+
+<a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+{% endblock %}

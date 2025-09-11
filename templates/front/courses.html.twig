@@ -7,6 +7,9 @@
 
 <p>{{ course.description }}</p>
 
+{# Bouton pour acheter le cours complet #}
+<a href="{{ path('front_purchase', {'type': 'course', 'id': course.id}) }}" class="btn btn-primary btn-sm">Acheter le cours</a>
+
 <h2>Leçons</h2>
 <ul>
     {% for lesson in course.lessons %}
