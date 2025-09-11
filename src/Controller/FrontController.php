@@ -48,7 +48,7 @@ class FrontController extends AbstractController
      * @return Response Redirects if access denied, otherwise displays the course
      */
     #[Route('courses/{id}', name: 'courses')]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_CLIENT')]
     public function courses(Course $course, ?User $user = null): Response
     {
         /** @var User $user */
@@ -79,7 +79,7 @@ class FrontController extends AbstractController
      * @return Response Redirects if access denied, otherwise displays the lesson
      */
     #[Route('lessons/{id}', name: 'lessons')]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_CLIENT')]
     public function lessons(Lesson $lesson): Response
     {
         /** @var User $user */
@@ -127,7 +127,7 @@ class FrontController extends AbstractController
      * @return Response Redirects after simulated purchase
      */
     #[Route('purchase/{type}/{id}', name: 'purchase')]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_CLIENT')]
     public function purchase(EntityManagerInterface $em, string $type, int $id): Response
     {
         /** @var User $user */
@@ -168,7 +168,7 @@ class FrontController extends AbstractController
      * @return Response Redirects to the course after validation
      */
     #[Route('validate-lesson/{id}', name: 'validate_lesson')]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_CLIENT')]
     public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
     {
         /** @var User $user */
@@ -214,7 +214,7 @@ class FrontController extends AbstractController
      * @return Response HTTP response rendering certifications
      */
     #[Route('certifications', name: 'certifications')]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_CLIENT')]
     public function certifications(): Response
     {
         /** @var User $user */
