@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Leçon: {{ lesson.title }}{% endblock %}
+
+{% block body %}
+<h1>📘 Leçon : {{ lesson.title }}</h1>
+
+<p>Prix : {{ lesson.price }} €</p>
+<p>{{ lesson.content }}</p>
+
+{% if validated %}
+    <p style="color:green;">✅ Cette leçon est validée</p>
+{% else %}
+    <a href="{{ path('front_validate_lesson', {'id': lesson.id}) }}" class="btn btn-success">Valider la leçon</a>
+{% endif %}
+
+<a href="{{ path('front_courses', {'id': lesson.course.id}) }}">← Retour au cours</a>
+{% endblock %}
