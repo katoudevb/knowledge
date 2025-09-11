@@ -3,7 +3,7 @@
 namespace App\Controller\Back;
 
 use App\Entity\Course;
-use App\Form\CourseType;
+use App\Form\Back\CourseType;
 use App\Repository\CourseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,8 +14,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/course', name: 'admin_course_')]
 #[IsGranted('ROLE_ADMIN')]
+/**
+ * Administration controller for managing courses.
+ *
+ * This controller allows an administrator (ROLE_ADMIN) to perform CRUD operations
+ * on the {@see Course} entity: listing, creating, editing, showing, and deleting courses.
+ */
 final class CourseController extends AbstractController
 {
+    /**
+     * Lists all courses.
+     *
+     * @param CourseRepository $courseRepository Repository to access Course entities
+     * @return Response HTTP response with the rendered view
+     */
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(CourseRepository $courseRepository): Response
     {
@@ -24,6 +36,16 @@ final class CourseController extends AbstractController
         ]);
     }
 
+    /**
+     * Creates a new course.
+     *
+     * Displays a form for creating a new course and persists it to the database
+     * if the form is submitted and valid.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response Redirects to the index or renders the creation form
+     */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -44,6 +66,12 @@ final class CourseController extends AbstractController
         ]);
     }
 
+    /**
+     * Displays a course details.
+     *
+     * @param Course $course Course entity automatically injected
+     * @return Response HTTP response with the rendered view
+     */
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(Course $course): Response
     {
@@ -52,6 +80,17 @@ final class CourseController extends AbstractController
         ]);
     }
 
+    /**
+     * Edits an existing course.
+     *
+     * Displays a form for editing an existing course and updates it in the database
+     * if the form is submitted and valid.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param Course $course Course entity to edit
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response Redirects to the index or renders the edit form
+     */
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Course $course, EntityManagerInterface $entityManager): Response
     {
@@ -69,6 +108,16 @@ final class CourseController extends AbstractController
         ]);
     }
 
+    /**
+     * Deletes a course.
+     *
+     * Checks the CSRF token validity before removing the entity from the database.
+     *
+     * @param Request $request HTTP request containing the CSRF token
+     * @param Course $course Course entity to delete
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response Redirects to the index after deletion
+     */
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, Course $course, EntityManagerInterface $entityManager): Response
     {

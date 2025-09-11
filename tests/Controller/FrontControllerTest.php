@@ -1,62 +1,72 @@
 <?php
-
 namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Entity\Lesson;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\TestHelpers;
 
+/**
+ * Functional tests for the FrontController.
+ *
+ * Verifies:
+ * - Access to lessons for a logged-in user
+ * - Display of the certifications page
+ */
 class FrontControllerTest extends WebTestCase
 {
-    private function createUser(?string $email = null): User
+    use TestHelpers;
+
+    /**
+     * Initialize the client and EntityManager before each test
+     */
+    protected function setUp(): void
     {
-        $container = static::getContainer();
-        $em = $container->get('doctrine')->getManager();
-
-        $userRepo = $container->get(\App\Repository\UserRepository::class);
-
-        $email = $email ?? 'user_' . uniqid() . '@example.com';
-
-        // Supprime si l’utilisateur existe déjà
-        $existing = $userRepo->findOneBy(['email' => $email]);
-        if ($existing) {
-            $em->remove($existing);
-            $em->flush();
-        }
-
-        $user = new User();
-        $user->setEmail($email)
-             ->setPassword(password_hash('password', PASSWORD_BCRYPT));
-
-        $em->persist($user);
-        $em->flush();
-
-        return $user;
+        $this->initTest();
     }
 
+    /**
+     * Tests access to a lesson for a logged-in user
+     * and ensures the course title is correctly displayed
+     */
     public function testAccessLesson(): void
     {
-        $client = static::createClient();
+        // Create a user and log them in
         $user = $this->createUser();
-        $client->loginUser($user);
+        $this->client->loginUser($user);
 
-        $lesson = static::getContainer()->get('doctrine')
-            ->getRepository(Lesson::class)
-            ->findOneBy([]);
+        // Create a lesson along with its theme and course
+        $lesson = $this->createLessonWithTheme(
+            'Test Lesson', 50, 'Theme Test', 'Test Course'
+        );
 
-        $client->request('GET', '/lessons/'.$lesson->getId());
+        // Purchase the full course to grant access to all lessons
+        $this->purchaseCourse($user, $lesson->getCourse(), $lesson->getCourse()->getPrice());
+
+        // Access the lesson page and follow redirections
+        $crawler = $this->client->request('GET', '/lessons/'.$lesson->getId());
+        while ($this->client->getResponse()->isRedirection()) {
+            $crawler = $this->client->followRedirect();
+        }
+
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('h1'); // Vérifie le titre de la leçon
+        // Vérifie maintenant le titre du cours dans le h1
+        $this->assertSelectorTextContains('h1', $lesson->getCourse()->getTitle());
     }
 
+    /**
+     * Tests the display of the certifications page
+     */
     public function testCertificationsPage(): void
     {
-        $client = static::createClient();
+        // Create a user and log them in
         $user = $this->createUser();
-        $client->loginUser($user);
+        $this->client->loginUser($user);
 
-        $client->request('GET', '/certifications');
+        // Access the certifications page
+        $this->client->request('GET', '/certifications');
+
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.certification-list'); // Classe CSS de ton template
+        $this->assertSelectorExists('.certification-list');
     }
 }
