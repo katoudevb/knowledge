@@ -97,70 +97,73 @@ class FrontController extends AbstractController
         return $this->redirectToRoute('front_themes');
     }
 
-    // -----------------------------
-    // Validation d’une leçon
-    // -----------------------------
-    #[Route('validate-lesson/{id}', name: 'validate_lesson')]
-    #[IsGranted('ROLE_USER')]
-    public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
-    {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur
-        // -----------------------------
-        /** @var User $user */
-        $user = $this->getUser();
+  // -----------------------------
+// Validation d’une leçon
+// -----------------------------
+#[Route('validate-lesson/{id}', name: 'validate_lesson')]
+#[IsGranted('ROLE_USER')]
+public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
+{
+    /** -----------------------------
+     * AJOUT : récupération sécurisée de l'utilisateur
+     * ----------------------------- **/
+    /** @var User $user */
+    $user = $this->getUser();
 
-        $userLesson = $em->getRepository(UserLesson::class)
-                         ->findOneBy(['user' => $user, 'lesson' => $lesson]);
+    $userLesson = $em->getRepository(UserLesson::class)
+                     ->findOneBy(['user' => $user, 'lesson' => $lesson]);
 
-        if (!$userLesson) {
-            $userLesson = new UserLesson();
-            $userLesson->setUser($user)
-                       ->setLesson($lesson);
+    if (!$userLesson) {
+        $userLesson = new UserLesson();
+        $userLesson->setUser($user)
+                   ->setLesson($lesson);
+    }
+
+    $userLesson->setValidated(true)
+               ->setValidateAt(new \DateTimeImmutable());
+
+    $em->persist($userLesson);
+    $em->flush();
+
+    /** -----------------------------
+     * AJOUT : Vérification si toutes les leçons du cours sont validées
+     * ----------------------------- **/
+    $allValidated = true;
+    foreach ($lesson->getCourse()->getLessons() as $l) {
+        if (!$user->hasValidatedLesson($l)) {
+            $allValidated = false;
+            break;
         }
+    }
 
-        $userLesson->setValidated(true)
-                   ->setValidateAt(new \DateTimeImmutable());
-
-        $em->persist($userLesson);
+    if ($allValidated) {
+        /** -----------------------------
+         * AJOUT : création automatique d'une certification
+         * ----------------------------- **/
+        $user->addFrontCertificationFromCourse($lesson->getCourse());
         $em->flush();
-
-        // -----------------------------
-        // AJOUT : Vérification si toutes les leçons du cours sont validées
-        // -----------------------------
-        $allValidated = true;
-        foreach ($lesson->getCourse()->getLessons() as $l) {
-            if (!$user->hasValidatedLesson($l)) {
-                $allValidated = false;
-                break;
-            }
-        }
-
-        if ($allValidated) {
-            $user->addFrontCertificationFromCourse($lesson->getCourse());
-            $em->flush();
-        }
-
-        $this->addFlash('success', 'Leçon validée !');
-        return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
     }
 
-    // -----------------------------
-    // Récapitulatif des certifications
-    // -----------------------------
-    #[Route('certifications', name: 'certifications')]
-    #[IsGranted('ROLE_USER')]
-    public function certifications(): Response
-    {
-        // -----------------------------
-        // AJOUT : récupération sécurisée de l'utilisateur
-        // -----------------------------
-        /** @var User $user */
-        $user = $this->getUser();
-        $certifications = $user->getFrontCertifications();
+    $this->addFlash('success', 'Leçon validée !');
+    return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
+}
 
-        return $this->render('front/certifications.html.twig', [
-            'certifications' => $certifications,
-        ]);
-    }
+// -----------------------------
+// Récapitulatif des certifications
+// -----------------------------
+#[Route('certifications', name: 'certifications')]
+#[IsGranted('ROLE_USER')]
+public function certifications(): Response
+{
+    /** -----------------------------
+     * AJOUT : récupération sécurisée de l'utilisateur
+     * ----------------------------- **/
+    /** @var User $user */
+    $user = $this->getUser();
+    $certifications = $user->getFrontCertifications();
+
+    return $this->render('front/certifications.html.twig', [
+        'certifications' => $certifications,
+    ]);
+}
 }
