@@ -1,3 +1,69 @@
 body {
-    background-color: skyblue;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    background-color: #f1f8fc;
+    color: #384050;
+    margin: 0;
+    padding: 0;
+}
+
+/* Conteneur principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Boutons */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+}
+
+.btn-primary {
+    background-color: #0074c7;
+}
+
+.btn-primary:hover {
+    background-color: #00497c;
+}
+
+.btn-success {
+    background-color: #82b864;
+}
+
+.btn-danger {
+    background-color: #cd2c2e;
+}
+
+/* Titres */
+h1, h2, h3 {
+    color: #00497c;
+}
+
+/* Liens */
+a {
+    text-decoration: none;
+    color: #0074c7;
+}
+
+a:hover {
+    color: #00497c;
+}
+
+/* Tableaux / listes */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+th, td {
+    padding: 0.5rem;
+    border: 1px solid #384050;
 }
