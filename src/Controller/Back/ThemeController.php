@@ -3,7 +3,7 @@
 namespace App\Controller\Back;
 
 use App\Entity\Theme;
-use App\Form\ThemeType;
+use App\Form\Back\ThemeType;
 use App\Repository\ThemeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,8 +14,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/theme', name: 'admin_theme_')]
 #[IsGranted('ROLE_ADMIN')]
+/**
+ * Administration controller for managing themes.
+ *
+ * This controller allows administrators (ROLE_ADMIN) to perform CRUD operations
+ * on Theme entities: list, create, read, update, and delete.
+ */
 final class ThemeController extends AbstractController
 {
+    /**
+     * Lists all themes.
+     *
+     * @param ThemeRepository $themeRepository Repository to access Theme entities
+     * @return Response HTTP response rendering the list of themes
+     */
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(ThemeRepository $themeRepository): Response
     {
@@ -24,6 +36,16 @@ final class ThemeController extends AbstractController
         ]);
     }
 
+    /**
+     * Creates a new theme.
+     *
+     * Displays a creation form and, if submitted and valid,
+     * persists the entity to the database.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response rendering the form or redirecting to the index
+     */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -44,6 +66,12 @@ final class ThemeController extends AbstractController
         ]);
     }
 
+    /**
+     * Shows details of a theme.
+     *
+     * @param Theme $theme Theme entity automatically injected
+     * @return Response HTTP response rendering theme details
+     */
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(Theme $theme): Response
     {
@@ -52,6 +80,17 @@ final class ThemeController extends AbstractController
         ]);
     }
 
+    /**
+     * Edits an existing theme.
+     *
+     * Displays an edit form and, if submitted and valid,
+     * updates the entity in the database.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param Theme $theme Theme entity to edit
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response rendering the form or redirecting to the index
+     */
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Theme $theme, EntityManagerInterface $entityManager): Response
     {
@@ -69,6 +108,17 @@ final class ThemeController extends AbstractController
         ]);
     }
 
+    /**
+     * Deletes a theme.
+     *
+     * Checks CSRF token validity before removing the entity
+     * from the database.
+     *
+     * @param Request $request HTTP request containing the CSRF token
+     * @param Theme $theme Theme entity to delete
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response redirecting to the index after deletion
+     */
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, Theme $theme, EntityManagerInterface $entityManager): Response
     {

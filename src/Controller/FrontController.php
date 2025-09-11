@@ -14,12 +14,22 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/', name: 'front_')]
+/**
+ * Front controller of the application.
+ *
+ * Manages the display of themes, courses, and lessons for end-users.
+ * Also handles purchase simulation, lesson validation, and certification summaries.
+ */
 class FrontController extends AbstractController
 {
-    // -----------------------------
-    // Page d'accueil / liste des thèmes
-    // Accessible à tous
-    // -----------------------------
+    /**
+     * Homepage displaying the list of themes.
+     *
+     * Accessible to all users, including guests.
+     *
+     * @param EntityManagerInterface $em Doctrine entity manager
+     * @return Response HTTP response rendering the themes
+     */
     #[Route('', name: 'home')]
     #[Route('themes', name: 'themes')]
     public function themes(EntityManagerInterface $em): Response
@@ -28,10 +38,15 @@ class FrontController extends AbstractController
         return $this->render('front/themes.html.twig', compact('themes'));
     }
 
-    // -----------------------------
-    // Affichage d’un cours et ses leçons
-    // Accessible uniquement aux utilisateurs connectés
-    // -----------------------------
+    /**
+     * Displays a course and its lessons.
+     *
+     * Accessible only to logged-in users who purchased the course or one of its lessons.
+     *
+     * @param Course $course Course entity to display
+     * @param User|null $user Current logged-in user (injected by security)
+     * @return Response Redirects if access denied, otherwise displays the course
+     */
     #[Route('courses/{id}', name: 'courses')]
     #[IsGranted('ROLE_USER')]
     public function courses(Course $course, ?User $user = null): Response
@@ -39,7 +54,6 @@ class FrontController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérification que l'utilisateur a acheté le cours ou une leçon
         $hasAccess = false;
         foreach ($course->getPurchases() as $purchase) {
             if ($purchase->getUser() === $user) {
@@ -49,17 +63,21 @@ class FrontController extends AbstractController
         }
 
         if (!$hasAccess) {
-            $this->addFlash('error', 'Vous devez acheter ce cours pour y accéder.');
+            $this->addFlash('error', 'You must purchase this course to access it.');
             return $this->redirectToRoute('front_themes');
         }
 
         return $this->render('front/courses.html.twig', compact('course'));
     }
 
-    // -----------------------------
-    // Affichage d’une leçon
-    // Accessible uniquement aux utilisateurs connectés
-    // -----------------------------
+    /**
+     * Displays a lesson.
+     *
+     * Accessible only to logged-in users who purchased the lesson or the full course.
+     *
+     * @param Lesson $lesson Lesson entity to display
+     * @return Response Redirects if access denied, otherwise displays the lesson
+     */
     #[Route('lessons/{id}', name: 'lessons')]
     #[IsGranted('ROLE_USER')]
     public function lessons(Lesson $lesson): Response
@@ -69,6 +87,7 @@ class FrontController extends AbstractController
 
         $hasAccess = false;
 
+        // Check direct lesson purchase
         foreach ($lesson->getPurchases() as $purchase) {
             if ($purchase->getUser() === $user) {
                 $hasAccess = true;
@@ -76,7 +95,7 @@ class FrontController extends AbstractController
             }
         }
 
-        // Vérification si l'utilisateur a acheté le cours global
+        // Check purchase of the full course
         foreach ($lesson->getCourse()->getPurchases() as $purchase) {
             if ($purchase->getUser() === $user) {
                 $hasAccess = true;
@@ -85,7 +104,7 @@ class FrontController extends AbstractController
         }
 
         if (!$hasAccess) {
-            $this->addFlash('error', 'Vous n’avez pas accès à cette leçon.');
+            $this->addFlash('error', 'You do not have access to this lesson.');
             return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
         }
 
@@ -97,9 +116,16 @@ class FrontController extends AbstractController
         ]);
     }
 
-    // -----------------------------
-    // Achat sandbox : le compte doit être activé
-    // -----------------------------
+    /**
+     * Simulates a purchase of a course or lesson.
+     *
+     * Accessible only to logged-in users with verified email.
+     *
+     * @param EntityManagerInterface $em Doctrine entity manager
+     * @param string $type Type of item to purchase ("course" or "lesson")
+     * @param int $id Item identifier
+     * @return Response Redirects after simulated purchase
+     */
     #[Route('purchase/{type}/{id}', name: 'purchase')]
     #[IsGranted('ROLE_USER')]
     public function purchase(EntityManagerInterface $em, string $type, int $id): Response
@@ -107,8 +133,8 @@ class FrontController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if (!$user->getIsVerified()) {
-            $this->addFlash('error', 'Vous devez vérifier votre email pour effectuer un achat.');
+        if (!$user->isVerified()) {
+            $this->addFlash('error', 'You must verify your email to make a purchase.');
             return $this->redirectToRoute('front_themes');
         }
 
@@ -119,22 +145,28 @@ class FrontController extends AbstractController
         };
 
         if (!$item) {
-            $this->addFlash('error', 'Élément introuvable.');
+            $this->addFlash('error', 'Item not found.');
             return $this->redirectToRoute('front_themes');
         }
 
         $purchase = new Purchase();
-        $purchase->sandboxPurchase($user, $item); // utilise la méthode sandboxPurchase de l'entité
+        $purchase->sandboxPurchase($user, $item);
         $em->persist($purchase);
         $em->flush();
 
-        $this->addFlash('success', 'Achat simulé avec succès !');
+        $this->addFlash('success', 'Simulated purchase successful!');
         return $this->redirectToRoute('front_themes');
     }
 
-    // -----------------------------
-    // Validation d’une leçon par l’utilisateur
-    // -----------------------------
+    /**
+     * Marks a lesson as validated by the user.
+     *
+     * If all lessons of a course are validated, a certification is automatically granted.
+     *
+     * @param EntityManagerInterface $em Doctrine entity manager
+     * @param Lesson $lesson Lesson entity to validate
+     * @return Response Redirects to the course after validation
+     */
     #[Route('validate-lesson/{id}', name: 'validate_lesson')]
     #[IsGranted('ROLE_USER')]
     public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
@@ -151,13 +183,12 @@ class FrontController extends AbstractController
                        ->setLesson($lesson);
         }
 
-        $userLesson->setValidated(true)
-                   ->setValidateAt(new \DateTimeImmutable());
-
+        $userLesson->setValidated(true);
+                   
         $em->persist($userLesson);
         $em->flush();
 
-        // Vérification si toutes les leçons du cours sont validées
+        // Check if all lessons of the course are validated
         $allValidated = true;
         foreach ($lesson->getCourse()->getLessons() as $l) {
             if (!$user->hasValidatedLesson($l)) {
@@ -167,17 +198,21 @@ class FrontController extends AbstractController
         }
 
         if ($allValidated) {
-            $user->addFrontCertificationFromCourse($lesson->getCourse());
+            $user->addCertificationFromCourse($lesson->getCourse());
             $em->flush();
         }
 
-        $this->addFlash('success', 'Leçon validée !');
+        $this->addFlash('success', 'Lesson validated!');
         return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
     }
 
-    // -----------------------------
-    // Récapitulatif des certifications de l'utilisateur
-    // -----------------------------
+    /**
+     * Displays the summary of certifications obtained by the user.
+     *
+     * Accessible only to logged-in users.
+     *
+     * @return Response HTTP response rendering certifications
+     */
     #[Route('certifications', name: 'certifications')]
     #[IsGranted('ROLE_USER')]
     public function certifications(): Response

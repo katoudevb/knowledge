@@ -5,28 +5,42 @@ namespace App\Tests;
 use App\Entity\User;
 use App\Entity\Lesson;
 use App\Entity\Course;
+use App\Entity\Theme;
 use App\Entity\Purchase;
 use App\Entity\UserLesson;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
+/**
+ * Trait TestHelpers
+ * 
+ * Fournit des méthodes utilitaires pour les tests fonctionnels :
+ * - Initialisation du client et de l'EntityManager
+ * - Purge des entités pour un état propre avant chaque test
+ * - Création d'utilisateurs, d'achats et de leçons avec thème
+ */
 trait TestHelpers
 {
+    /** @var KernelBrowser Client Symfony pour faire des requêtes */
     protected KernelBrowser $client;
+
+    /** @var EntityManagerInterface EntityManager pour interagir avec la BDD */
     protected EntityManagerInterface $em;
 
     /**
-     * ⚠️ Cette méthode doit être appelée dans setUp() de chaque test
+     * Initialise le client et l'EntityManager.
+     * ⚠️ Appeler dans le setUp() de chaque test.
      */
     protected function initTest(): void
     {
-        // Crée le client
         $this->client = static::createClient();
-
-        // Récupère l'EntityManager
         $this->em = static::getContainer()->get('doctrine')->getManager();
     }
 
+    /**
+     * Supprime toutes les entités User, Purchase et UserLesson.
+     * Permet d'avoir une BDD propre avant chaque test.
+     */
     protected function purgeEntities(): void
     {
         $this->em->createQuery('DELETE FROM App\Entity\UserLesson')->execute();
@@ -35,6 +49,9 @@ trait TestHelpers
         $this->em->flush();
     }
 
+    /**
+     * Crée un utilisateur et le persiste.
+     */
     protected function createUser(?string $email = null, bool $verified = true): User
     {
         $this->purgeEntities();
@@ -52,14 +69,15 @@ trait TestHelpers
         return $user;
     }
 
+    /**
+     * Crée un achat pour une leçon.
+     */
     protected function purchaseLesson(User $user, Lesson $lesson, ?int $amount = null): Purchase
     {
         $existing = $this->em->getRepository(Purchase::class)
                        ->findOneBy(['user' => $user, 'lesson' => $lesson]);
 
-        if ($existing) {
-            return $existing;
-        }
+        if ($existing) return $existing;
 
         $purchase = new Purchase();
         $purchase->setUser($user)
@@ -73,6 +91,9 @@ trait TestHelpers
         return $purchase;
     }
 
+    /**
+     * Crée un achat pour un cours.
+     */
     protected function purchaseCourse(User $user, Course $course, ?int $amount = null): Purchase
     {
         $purchase = new Purchase();
@@ -87,6 +108,9 @@ trait TestHelpers
         return $purchase;
     }
 
+    /**
+     * Crée un UserLesson pour suivre la validation d'une leçon.
+     */
     protected function createUserLesson(User $user, Lesson $lesson, bool $validated = false): UserLesson
     {
         $userLesson = new UserLesson();
@@ -98,5 +122,41 @@ trait TestHelpers
         $this->em->flush();
 
         return $userLesson;
+    }
+
+    /**
+     * Crée une leçon avec un thème et un cours associés.
+     * ⚠️ Permet d'éviter les erreurs theme_id cannot be null.
+     */
+    protected function createLessonWithTheme(
+        string $lessonTitle = 'Test Lesson',
+        float $price = 50,
+        string $themeName = 'Test Theme',
+        string $courseTitle = 'Test Course'
+    ): Lesson
+    {
+        // Créer un thème
+        $theme = new Theme();
+        $theme->setName($themeName);
+        $this->em->persist($theme);
+
+        // Créer un cours
+        $course = new Course();
+        $course->setTitle($courseTitle)
+               ->setPrice($price)
+               ->setTheme($theme);
+        $this->em->persist($course);
+
+        // Créer la leçon
+        $lesson = new Lesson();
+        $lesson->setTitle($lessonTitle)
+               ->setPrice($price)
+               ->setCourse($course)
+               ->setTheme($theme);
+        $this->em->persist($lesson);
+
+        $this->em->flush();
+
+        return $lesson;
     }
 }

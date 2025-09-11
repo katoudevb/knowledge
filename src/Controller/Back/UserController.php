@@ -14,11 +14,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/user', name: 'admin_user_')]
 #[IsGranted('ROLE_ADMIN')]
+/**
+ * Administration controller for managing users.
+ *
+ * This controller allows administrators (ROLE_ADMIN) to perform CRUD operations
+ * on User entities: list, create, read, update, and delete.
+ */
 final class UserController extends AbstractController
 {
-    // -----------------------------
-    // Liste des utilisateurs
-    // -----------------------------
+    /**
+     * Lists all registered users.
+     *
+     * @param UserRepository $userRepository Repository to access User entities
+     * @return Response HTTP response rendering the list of users
+     */
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(UserRepository $userRepository): Response
     {
@@ -27,9 +36,16 @@ final class UserController extends AbstractController
         ]);
     }
 
-    // -----------------------------
-    // Création d’un nouvel utilisateur
-    // -----------------------------
+    /**
+     * Creates a new user.
+     *
+     * Displays a creation form and, if submitted and valid,
+     * persists the entity to the database.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response rendering the form or redirecting to the index
+     */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -50,9 +66,12 @@ final class UserController extends AbstractController
         ]);
     }
 
-    // -----------------------------
-    // Affichage d’un utilisateur
-    // -----------------------------
+    /**
+     * Shows details of a user.
+     *
+     * @param User $user User entity automatically injected
+     * @return Response HTTP response rendering user details
+     */
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(User $user): Response
     {
@@ -61,9 +80,17 @@ final class UserController extends AbstractController
         ]);
     }
 
-    // -----------------------------
-    // Édition d’un utilisateur
-    // -----------------------------
+    /**
+     * Edits an existing user.
+     *
+     * Displays an edit form and, if submitted and valid,
+     * updates the entity in the database.
+     *
+     * @param Request $request HTTP request containing form data
+     * @param User $user User entity to edit
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response rendering the form or redirecting to the index
+     */
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
     {
@@ -81,9 +108,17 @@ final class UserController extends AbstractController
         ]);
     }
 
-    // -----------------------------
-    // Suppression d’un utilisateur
-    // -----------------------------
+    /**
+     * Deletes a user.
+     *
+     * Checks CSRF token validity before removing the entity
+     * from the database.
+     *
+     * @param Request $request HTTP request containing the CSRF token
+     * @param User $user User entity to delete
+     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @return Response HTTP response redirecting to the index after deletion
+     */
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
     {
