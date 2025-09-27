@@ -3,5 +3,16 @@
 {% block title %}Accueil{% endblock %}
 
 {% block body %}
-<h1>Bienvenue sur le frontoffice !</h1>
+<div class="container d-flex justify-content-center align-items-center" style="min-height:70vh;">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card shadow-sm rounded-3 text-center p-4">
+            <h1 class="h3 text-primary mb-3">Bienvenue sur le frontoffice !</h1>
+            <p class="text-muted">Explorez les cours, suivez votre progression et obtenez vos certificats sur la plateforme Knowledge.</p>
+
+            <a href="{{ path('front_home') }}" class="btn btn-primary mt-3">Commencer</a>
+        </div>
+
+    </div>
+</div>
 {% endblock %}

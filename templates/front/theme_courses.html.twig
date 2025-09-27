@@ -3,21 +3,33 @@
 {% block title %}Cours pour le thème : {{ theme.name }}{% endblock %}
 
 {% block body %}
-<h1>📚 Cours pour le thème : {{ theme.name }}</h1>
+<div class="container my-5">
+    <h1 class="text-primary text-center mb-4">📚 Cours pour le thème : {{ theme.name }}</h1>
 
-{% if theme.courses|length > 0 %}
-    <ul>
-        {% for course in theme.courses %}
-            <li>
-                <a href="{{ path('front_courses', {'id': course.id}) }}">{{ course.title }}</a>
-                - {{ course.price }} €
-                <a href="{{ path('front_purchase', {'type': 'course', 'id': course.id}) }}" class="btn btn-primary btn-sm">Acheter le cours</a>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>Aucun cours disponible pour ce thème pour le moment.</p>
-{% endif %}
+    {% if theme.courses|length > 0 %}
+        <div class="row g-3">
+            {% for course in theme.courses %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
+                            <a href="{{ path('front_purchase', {'type': 'course', 'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
+                                Acheter le cours
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            Aucun cours disponible pour ce thème pour le moment.
+        </div>
+    {% endif %}
 
-<a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+    <div class="mt-4 text-center">
+        <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+    </div>
+</div>
 {% endblock %}

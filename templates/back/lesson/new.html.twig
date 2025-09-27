@@ -1,11 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Lesson{% endblock %}
+{% block title %}Créer une leçon{% endblock %}
+
+{% block page_title %}Nouvelle leçon{% endblock %}
 
 {% block body %}
-    <h1>Create new Lesson</h1>
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Formulaire de création de leçon</h2>
 
-    {{ include('back/lesson/_form.html.twig') }}
+    {{ include('back/lesson/_form.html.twig', {'button_label': 'Créer'}) }}
 
-    <a href="{{ path('admin_lesson_index') }}">back to list</a>
+    <div class="mt-3">
+        <a href="{{ path('admin_lesson_index') }}" class="btn btn-secondary">← Retour à la liste</a>
+    </div>
+</div>
 {% endblock %}
