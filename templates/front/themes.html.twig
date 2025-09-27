@@ -3,16 +3,28 @@
 {% block title %}Thèmes{% endblock %}
 
 {% block body %}
-<h1>📚 Thèmes disponibles</h1>
+<div class="container my-5">
+    <h1 class="text-primary text-center mb-4">📚 Thèmes disponibles</h1>
 
-<ul>
-    {% for theme in themes %}
-        <li>
-            {# On redirige vers les cours du thème #}
-            <a href="{{ path('front_theme_courses', {'id': theme.id}) }}">{{ theme.name }}</a>
-        </li>
+    {% if themes is not empty %}
+        <div class="row g-3">
+            {% for theme in themes %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title">{{ theme.name }}</h5>
+                            <a href="{{ path('front_theme_courses', {'id': theme.id}) }}" class="btn btn-primary mt-3 w-100">
+                                Voir les cours
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% else %}
-        <li>Aucun thème disponible pour le moment.</li>
-    {% endfor %}
-</ul>
+        <div class="alert alert-info text-center">
+            Aucun thème disponible pour le moment.
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

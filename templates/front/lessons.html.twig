@@ -3,33 +3,35 @@
 {% block title %}Leçon: {{ lesson.title }}{% endblock %}
 
 {% block body %}
-<div class="lesson-container">
-    <h1>📘 Leçon : {{ lesson.title }}</h1>
+<div class="container my-5">
+    <div class="card shadow-sm rounded-3 p-4">
+        <h1 class="h4 text-primary mb-3">📘 Leçon : {{ lesson.title }}</h1>
 
-    <p><strong>Prix :</strong> {{ lesson.price }} €</p>
+        <p><strong>Prix :</strong> {{ lesson.price }} €</p>
 
-    <!-- Contenu de la leçon ou Lorem Ipsum si vide -->
-    <div class="lesson-content">
-        <p>{{ lesson.content ?: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur euismod, nisl vel tincidunt facilisis, neque quam laoreet purus, a fermentum nulla erat id ex.' }}</p>
-    </div>
-
-    <!-- Vidéo intégrée si présente -->
-    {% if lesson.videoUrl %}
-        <div class="lesson-video" style="margin: 20px 0;">
-            <iframe width="560" height="315" src="{{ lesson.videoUrl }}" frameborder="0" allowfullscreen></iframe>
+        <!-- Lesson content -->
+        <div class="lesson-content mb-4">
+            <p>{{ lesson.content ?: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur euismod, nisl vel tincidunt facilisis, neque quam laoreet purus, a fermentum nulla erat id ex.' }}</p>
         </div>
-    {% endif %}
 
-    <!-- Bouton ou indicateur de validation -->
-    <div class="lesson-validation" style="margin: 20px 0;">
-        {% if validated %}
-            <p style="color:green; font-weight: bold;">✅ Cette leçon est validée</p>
-        {% else %}
-            <a href="{{ path('front_validate_lesson', {'id': lesson.id}) }}" class="btn btn-success">Valider la leçon</a>
+        <!-- Embedded video if available -->
+        {% if lesson.videoUrl %}
+            <div class="mb-4 ratio ratio-16x9">
+                <iframe src="{{ lesson.videoUrl }}" frameborder="0" allowfullscreen></iframe>
+            </div>
         {% endif %}
-    </div>
 
-    <!-- Lien retour vers le cours parent -->
-    <a href="{{ path('front_courses', {'id': lesson.course.id}) }}" class="btn btn-secondary">← Retour au cours</a>
+        <!-- Validation button or indicator -->
+        <div class="mb-4">
+            {% if validated %}
+                <p class="text-success fw-bold">✅ Cette leçon est validée</p>
+            {% else %}
+                <a href="{{ path('front_validate_lesson', {'id': lesson.id}) }}" class="btn btn-success">Valider la leçon</a>
+            {% endif %}
+        </div>
+
+        <!-- Link back to parent course -->
+        <a href="{{ path('front_courses', {'id': lesson.course.id}) }}" class="btn btn-secondary">← Retour au cours</a>
+    </div>
 </div>
 {% endblock %}

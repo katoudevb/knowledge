@@ -1,13 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Theme{% endblock %}
+{% block title %}Modifier thème{% endblock %}
+
+{% block page_title %}Modifier un thème{% endblock %}
 
 {% block body %}
-    <h1>Edit Theme</h1>
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Formulaire de modification</h2>
 
-    {{ include('back/theme/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('back/theme/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
-    <a href="{{ path('admin_theme_index') }}">back to list</a>
-
-    {{ include('back/theme/_delete_form.html.twig') }}
+    <div class="mt-3 d-flex gap-2">
+        <a href="{{ path('admin_theme_index') }}" class="btn btn-secondary">← Retour à la liste</a>
+        {{ include('back/theme/_delete_form.html.twig') }}
+    </div>
+</div>
 {% endblock %}

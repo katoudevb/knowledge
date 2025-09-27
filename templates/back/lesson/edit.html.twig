@@ -1,13 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Lesson{% endblock %}
+{% block title %}Modifier une leçon{% endblock %}
+
+{% block page_title %}Modifier la leçon{% endblock %}
 
 {% block body %}
-    <h1>Edit Lesson</h1>
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Formulaire de modification de leçon</h2>
 
-    {{ include('back/lesson/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('back/lesson/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
-    <a href="{{ path('admin_lesson_index') }}">back to list</a>
-
-    {{ include('back/lesson/_delete_form.html.twig') }}
+    <div class="mt-3 d-flex gap-2">
+        <a href="{{ path('admin_lesson_index') }}" class="btn btn-secondary">← Retour à la liste</a>
+        {{ include('back/lesson/_delete_form.html.twig') }}
+    </div>
+</div>
 {% endblock %}

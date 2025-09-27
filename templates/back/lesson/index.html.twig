@@ -1,18 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Lesson index{% endblock %}
+{% block title %}Liste des leçons{% endblock %}
+
+{% block page_title %}Gestion des leçons{% endblock %}
 
 {% block body %}
-    <h1>Lesson index</h1>
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Liste des leçons</h2>
 
-    <table class="table">
-        <thead>
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="table-light">
             <tr>
                 <th>Id</th>
-                <th>Title</th>
-                <th>Price</th>
-                <th>Content</th>
-                <th>actions</th>
+                <th>Titre</th>
+                <th>Prix</th>
+                <th>Contenu</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -20,20 +23,21 @@
             <tr>
                 <td>{{ lesson.id }}</td>
                 <td>{{ lesson.title }}</td>
-                <td>{{ lesson.price }}</td>
-                <td>{{ lesson.content }}</td>
-                <td>
-                    <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}">show</a>
-                    <a href="{{ path('admin_lesson_edit', {'id': lesson.id}) }}">edit</a>
+                <td>{{ lesson.price }} €</td>
+                <td>{{ lesson.content ?: 'Aucun contenu' }}</td>
+                <td class="d-flex gap-2">
+                    <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}" class="btn btn-primary btn-sm">Voir</a>
+                    <a href="{{ path('admin_lesson_edit', {'id': lesson.id}) }}" class="btn btn-secondary btn-sm">Modifier</a>
                 </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="5">no records found</td>
+                <td colspan="5" class="text-center">Aucune leçon trouvée</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
-    <a href="{{ path('admin_lesson_new') }}">Create new</a>
+    <a href="{{ path('admin_lesson_new') }}" class="btn btn-success mt-3">Créer une nouvelle leçon</a>
+</div>
 {% endblock %}
