@@ -33,24 +33,24 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ path('front_home') }}">Home</a>
+                    <a class="nav-link" href="{{ path('front_home') }}">Accueil</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ path('front_themes') }}">Themes</a>
                 </li>
                 {% if app.user %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('front_certifications') }}">My Certifications</a>
+                        <a class="nav-link" href="{{ path('front_certifications') }}">Mes Certifications</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('app_logout') }}">Logout</a>
+                        <a class="nav-link" href="{{ path('app_logout') }}">Deconnexion</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('app_login') }}">Login</a>
+                        <a class="nav-link" href="{{ path('app_login') }}">Connexion</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('app_register') }}">Register</a>
+                        <a class="nav-link" href="{{ path('app_register') }}">Inscription</a>
                     </li>
                 {% endif %}
             </ul>
