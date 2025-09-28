@@ -19,8 +19,8 @@ security:
             entry_point: App\Security\AppAuthenticator
             custom_authenticator: App\Security\AppAuthenticator
             logout:
-                path: logout
-                target: /
+                path: app_logout
+                target: front_home 
             user_checker: App\Security\UserChecker
 
             # activate different ways to authenticate
