@@ -23,15 +23,23 @@
 
         <!-- Validation button or indicator -->
         <div class="mb-4">
-            {% if validated %}
+            {% if hasValidated %}
                 <p class="text-success fw-bold">✅ Cette leçon est validée</p>
             {% else %}
-                <a href="{{ path('front_validate_lesson', {'id': lesson.id}) }}" class="btn btn-success">Valider la leçon</a>
+                <form action="{{ path('front_lesson_validate', {'id': lesson.id}) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-success">Valider la leçon</button>
+                </form>
             {% endif %}
         </div>
 
         <!-- Link back to parent course -->
-        <a href="{{ path('front_courses', {'id': lesson.course.id}) }}" class="btn btn-secondary">← Retour au cours</a>
+
+        {% if lesson.course.theme %}
+            <a href="{{ path('front_theme_courses', {'themeId': lesson.course.theme.id}) }}" class="btn btn-secondary">← Retour au thème</a>
+        {% else %}
+            <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

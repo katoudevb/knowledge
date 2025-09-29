@@ -14,7 +14,7 @@
                         <div class="card-body d-flex flex-column justify-content-between">
                             <h5 class="card-title">{{ course.title }}</h5>
                             <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
-                            <a href="{{ path('front_purchase', {'type': 'course', 'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
+                            <a href="{{ path('front_course_purchase', {'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
                                 Acheter le cours
                             </a>
                         </div>

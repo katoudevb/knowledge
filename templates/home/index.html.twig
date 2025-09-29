@@ -3,16 +3,22 @@
 {% block title %}Accueil{% endblock %}
 
 {% block body %}
-<div class="container d-flex justify-content-center align-items-center" style="min-height:70vh;">
-    <div class="col-md-8 col-lg-6">
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center min-vh-70">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
 
-        <div class="card shadow-sm rounded-3 text-center p-4">
-            <h1 class="h3 text-primary mb-3">Bienvenue sur le frontoffice !</h1>
-            <p class="text-muted">Explorez les cours, suivez votre progression et obtenez vos certificats sur la plateforme Knowledge.</p>
+            <div class="card shadow-sm rounded-3 text-center p-4">
+                <h1 class="h3 text-primary mb-3">Bienvenue sur le frontoffice !</h1>
+                <p class="text-muted mb-4">
+                    Explorez les cours, suivez votre progression et obtenez vos certificats sur la plateforme Knowledge.
+                </p>
 
-            <a href="{{ path('front_home') }}" class="btn btn-primary mt-3">Commencer</a>
+                <a href="{{ path('front_dashboard') }}" class="btn btn-primary btn-lg w-100 w-md-auto">
+                    Commencer
+                </a>
+            </div>
+
         </div>
-
     </div>
 </div>
 {% endblock %}

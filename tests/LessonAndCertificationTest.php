@@ -28,19 +28,24 @@ class LessonAndCertificationTest extends WebTestCase
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Crée une leçon avec thème et cours en un seul appel
+        // Crée une leçon avec thème et cours (4 arguments)
         $lesson = $this->createLessonWithTheme(
-            'Test Lesson', 50, 'Theme Test', 'Test Course'
+            'Test Lesson',   // titre de la leçon
+            50,              // prix
+            'Theme Test',    // nom du thème
+            'Test Course'    // titre du cours
         );
 
         // Simule l'achat de la leçon
         $this->purchaseLesson($user, $lesson, 50);
 
-        // Teste la route d'achat de leçon
-        $this->client->request('GET', '/purchase/lesson/'.$lesson->getId());
-        $this->assertResponseRedirects('/themes');
+        // Appelle la route correcte pour l'achat
+        $this->client->request('GET', '/front/lesson/'.$lesson->getId().'/purchase');
 
-        // Vérifie que l'achat est bien enregistré dans la base
+        // Vérifie la redirection vers le dashboard
+        $this->assertResponseRedirects('/front/dashboard');
+
+        // Vérifie que l'achat est bien enregistré
         $this->em->refresh($lesson);
         $hasPurchase = false;
         foreach ($lesson->getPurchases() as $p) {
@@ -61,16 +66,21 @@ class LessonAndCertificationTest extends WebTestCase
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Crée une leçon avec thème et cours
+        // Crée une leçon avec thème et cours (4 arguments)
         $lesson = $this->createLessonWithTheme(
-            'Test Lesson', 50, 'Theme Test', 'Test Course'
+            'Test Lesson',   // titre de la leçon
+            50,              // prix
+            'Theme Test',    // nom du thème
+            'Test Course'    // titre du cours
         );
 
-        // Simule la validation de la leçon
-        $this->client->request('GET', '/validate-lesson/'.$lesson->getId());
-        $this->assertResponseRedirects('/courses/'.$lesson->getCourse()->getId());
+        // POST vers la route correcte avec /validate
+        $this->client->request('POST', '/front/lesson/'.$lesson->getId().'/validate');
 
-        // Vérifie que le UserLesson est créé et validé
+        // Vérifie la redirection vers le dashboard
+        $this->assertResponseRedirects('/front/dashboard');
+
+        // Vérifie que le UserLesson a été créé et validé
         $userLesson = $this->em->getRepository(\App\Entity\UserLesson::class)
                                ->findOneBy(['user' => $user, 'lesson' => $lesson]);
         $this->assertNotNull($userLesson, 'A UserLesson should be created');

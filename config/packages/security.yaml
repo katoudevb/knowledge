@@ -20,7 +20,7 @@ security:
             custom_authenticator: App\Security\AppAuthenticator
             logout:
                 path: app_logout
-                target: front_home 
+                target: app_home 
             user_checker: App\Security\UserChecker
 
             # activate different ways to authenticate

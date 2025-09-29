@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Thèmes{% endblock %}
+{% block title %}Thèmes disponibles{% endblock %}
 
 {% block body %}
 <div class="container my-5">
@@ -13,18 +13,17 @@
                     <div class="card h-100 shadow-sm">
                         <div class="card-body d-flex flex-column justify-content-between">
                             <h5 class="card-title">{{ theme.name }}</h5>
-                            <a href="{{ path('front_theme_courses', {'id': theme.id}) }}" class="btn btn-primary mt-3 w-100">
-                                Voir les cours
-                            </a>
+                            {% if theme.description is defined %}
+                                <p class="card-text">{{ theme.description }}</p>
+                            {% endif %}
+                            <a href="{{ path('front_theme_courses', {'themeId': theme.id}) }}" class="btn btn-primary mt-2">Voir le thème</a>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="alert alert-info text-center">
-            Aucun thème disponible pour le moment.
-        </div>
+        <p class="text-center text-muted">Aucun thème disponible pour le moment.</p>
     {% endif %}
 </div>
 {% endblock %}

@@ -43,33 +43,33 @@ class RegistrationFormType extends AbstractType
             ])
 
             ->add('plainPassword', PasswordType::class, [
-                'mapped' => false, // Not mapped directly; password is encoded in the controller
-                'attr' => ['autocomplete' => 'new-password'],
-                'constraints' => [
-                    new NotBlank(message: 'Veuillez entrer un mot de passe'), // Cannot be empty
-                    new Length(
-                        min: 8,
-                        minMessage: 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
-                        max: 4096
-                    ), // Enforces minimum and maximum length
-                    new Regex([
-                        'pattern' => '/[A-Z]/',
-                        'message' => 'Le mot de passe doit contenir au moins une majuscule',
-                    ]),
-                    new Regex([
-                        'pattern' => '/[a-z]/',
-                        'message' => 'Le mot de passe doit contenir au moins une minuscule',
-                    ]),
-                    new Regex([
-                        'pattern' => '/\d/',
-                        'message' => 'Le mot de passe doit contenir au moins un chiffre',
-                    ]),
-                    new Regex([
-                        'pattern' => '/[\W]/',
-                        'message' => 'Le mot de passe doit contenir au moins un caractère spécial',
-                    ]),
-                ],
-            ]);
+            'mapped' => false,
+            'attr' => ['autocomplete' => 'new-password'],
+            'constraints' => [
+                new NotBlank(message: 'Veuillez entrer un mot de passe'),
+                new Length(
+                    min: 8,
+                    minMessage: 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
+                    max: 4096
+                ),
+                new Regex(
+                    pattern: '/[A-Z]/',
+                    message: 'Le mot de passe doit contenir au moins une majuscule'
+                ),
+                new Regex(
+                    pattern: '/[a-z]/',
+                    message: 'Le mot de passe doit contenir au moins une minuscule'
+                ),
+                new Regex(
+                    pattern: '/\d/',
+                    message: 'Le mot de passe doit contenir au moins un chiffre'
+                ),
+                new Regex(
+                    pattern: '/[\W]/',
+                    message: 'Le mot de passe doit contenir au moins un caractère spécial'
+                ),
+            ],
+        ]);
     }
 
     /**

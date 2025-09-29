@@ -4,8 +4,7 @@ namespace App\Controller\Back;
 
 use App\Entity\User;
 use App\Form\Back\UserType;
-use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,14 +24,14 @@ final class UserController extends AbstractController
     /**
      * Lists all registered users.
      *
-     * @param UserRepository $userRepository Repository to access User entities
+     * @param UserService $userService Service to access User entities
      * @return Response HTTP response rendering the list of users
      */
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(UserRepository $userRepository): Response
+    public function index(UserService $userService): Response
     {
         return $this->render('back/user/index.html.twig', [
-            'users' => $userRepository->findAll(),
+            'users' => $userService->getAllUsers(),
         ]);
     }
 
@@ -43,19 +42,18 @@ final class UserController extends AbstractController
      * persists the entity to the database.
      *
      * @param Request $request HTTP request containing form data
-     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @param UserService $userService Service handling persistence
      * @return Response HTTP response rendering the form or redirecting to the index
      */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, UserService $userService): Response
     {
         $user = new User();
         $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $userService->saveUser($user);
 
             return $this->redirectToRoute('admin_user_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -88,17 +86,18 @@ final class UserController extends AbstractController
      *
      * @param Request $request HTTP request containing form data
      * @param User $user User entity to edit
-     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @param UserService $userService Service handling persistence
      * @return Response HTTP response rendering the form or redirecting to the index
      */
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, User $user, UserService $userService): Response
     {
         $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+            $userService->saveUser($user);
+
             return $this->redirectToRoute('admin_user_index', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -116,15 +115,14 @@ final class UserController extends AbstractController
      *
      * @param Request $request HTTP request containing the CSRF token
      * @param User $user User entity to delete
-     * @param EntityManagerInterface $entityManager Doctrine entity manager
+     * @param UserService $userService Service handling deletion
      * @return Response HTTP response redirecting to the index after deletion
      */
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, User $user, UserService $userService): Response
     {
         if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
+            $userService->deleteUser($user);
         }
 
         return $this->redirectToRoute('admin_user_index', [], Response::HTTP_SEE_OTHER);
