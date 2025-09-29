@@ -34,10 +34,13 @@ class PurchaseControllerTest extends WebTestCase
         $course = $this->em->getRepository(Course::class)->findOneBy([]);
         $this->purchaseCourse($user, $course, 100);
 
-        $this->client->request('GET', '/front/course/'.$course->getId());
+        // POST sur la route d'achat
+        $this->client->request('POST', '/front/course/'.$course->getId().'/purchase');
+
+        // Vérifie la redirection vers le dashboard
         $this->assertResponseRedirects('/front/dashboard');
 
-        // Vérification via Doctrine
+        // Vérification en base
         $purchase = $this->em->getRepository(Purchase::class)
             ->findOneBy([
                 'user' => $user,
@@ -45,6 +48,7 @@ class PurchaseControllerTest extends WebTestCase
             ]);
         $this->assertNotNull($purchase, "Le cours a bien été acheté");
     }
+
 
     /**
      * Test purchasing a lesson.
@@ -57,9 +61,13 @@ class PurchaseControllerTest extends WebTestCase
         $lesson = $this->em->getRepository(Lesson::class)->findOneBy([]);
         $this->purchaseLesson($user, $lesson, 50);
 
-        $this->client->request('GET', '/front/lesson/'.$lesson->getId());
+        // POST sur la route d'achat
+        $this->client->request('POST', '/front/lesson/'.$lesson->getId().'/purchase');
+
+        // Vérifie la redirection vers le dashboard
         $this->assertResponseRedirects('/front/dashboard');
 
+        // Vérification en base
         $purchase = $this->em->getRepository(Purchase::class)
             ->findOneBy([
                 'user' => $user,

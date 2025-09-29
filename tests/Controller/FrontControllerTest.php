@@ -31,33 +31,27 @@ class FrontControllerTest extends WebTestCase
      */
     public function testAccessLesson(): void
     {
-        // Create a user and log them in
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Create a lesson along with its theme and course
-        $lesson = $this->createLessonWithTheme(
-            'Test Lesson', 50, 'Theme Test', 'Test Course'
-        );
+        // Crée la leçon avec son thème et son cours
+        $lesson = $this->createLessonWithTheme('Test Lesson', 50, 'Theme Test', 'Test Course');
 
-        // Purchase the full course to grant access to all lessons
+        // Achat du cours complet pour donner accès à toutes les leçons
         $this->purchaseCourse($user, $lesson->getCourse(), $lesson->getCourse()->getPrice());
 
-        // Generate the URL using the router service
         $url = $this->client->getContainer()->get('router')->generate(
             'front_lesson_show',
             ['id' => $lesson->getId()]
         );
 
-        // Access the lesson page and follow redirections
         $crawler = $this->client->request('GET', $url);
         while ($this->client->getResponse()->isRedirection()) {
             $crawler = $this->client->followRedirect();
         }
 
         $this->assertResponseIsSuccessful();
-        // Vérifie maintenant le titre du cours dans le h1
-        $this->assertSelectorTextContains('h1', $lesson->getCourse()->getTitle());
+        $this->assertSelectorTextContains('h1', $lesson->getTitle());
     }
 
     /**
@@ -65,17 +59,24 @@ class FrontControllerTest extends WebTestCase
      */
     public function testCertificationsPage(): void
     {
-        // Create a user and log them in
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Generate the URL using the router service
-        $url = $this->client->getContainer()->get('router')->generate('front_certifications');
+        // Crée un cours et une leçon pour générer une certification
+        $lesson = $this->createLessonWithTheme('Test Lesson', 50, 'Theme Test', 'Test Course');
+        $course = $lesson->getCourse();
 
-        // Access the certifications page
-        $this->client->request('GET', $url);
+        // Simule l'achat et la validation pour générer la certification
+        $this->purchaseCourse($user, $course, $course->getPrice());
+        $this->validateCourse($user, $course);
+        
+        // Force Doctrine à recharger l'utilisateur
+        $this->em->refresh($user);
+
+        // Accède à la page des certifications
+        $crawler = $this->client->request('GET', '/front/certifications');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.certification-list');
+        $this->assertSelectorExists('.certification-list'); // La div existe maintenant
     }
 }
