@@ -2,238 +2,274 @@
 
 namespace App\Controller;
 
-use App\Entity\Course;
-use App\Entity\Lesson;
-use App\Entity\Theme;
-use App\Entity\Purchase;
 use App\Entity\User;
-use App\Entity\UserLesson;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Lesson;
+use App\Entity\Course;
+use App\Entity\Theme; // ajouté pour Theme
+use App\Repository\LessonRepository;
+use App\Repository\CourseRepository;
+use App\Service\FrontService;
+use App\Service\ThemeService; // ajouté pour ThemeService
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/', name: 'front_')]
 /**
- * Front controller of the application.
+ * Controller responsible for front-end user actions.
  *
- * Manages the display of themes, courses, and lessons for end-users.
- * Also handles purchase simulation, lesson validation, and certification summaries.
+ * Handles:
+ *  - Landing page / home redirection
+ *  - Displaying the user dashboard
+ *  - Showing lessons
+ *  - Managing lesson validation and purchases
+ *  - Handling certifications
+ *  - Displaying available themes/courses
  */
 class FrontController extends AbstractController
 {
     /**
-     * Homepage displaying the list of themes.
+     * Constructor with dependency injection.
      *
-     * Accessible to all users, including guests.
-     *
-     * @param EntityManagerInterface $em Doctrine entity manager
-     * @return Response HTTP response rendering the themes
+     * @param LessonRepository $lessonRepository
+     * @param CourseRepository $courseRepository
+     * @param FrontService $frontService
+     * @param ThemeService $themeService
      */
-    #[Route('', name: 'home')]
-    #[Route('themes', name: 'themes')]
-    public function themes(EntityManagerInterface $em): Response
+    public function __construct(
+        private LessonRepository $lessonRepository,
+        private CourseRepository $courseRepository,
+        private FrontService $frontService,
+        private ThemeService $themeService // injection du service ThemeService
+    ) {}
+
+    /**
+     * Retrieves the currently logged-in user.
+     *
+     * Ensures the user is of type App\Entity\User.
+     *
+     * @return User
+     * @throws AccessDeniedException if the user is not logged in
+     */
+    private function getCurrentUser(): User
     {
-        $themes = $em->getRepository(Theme::class)->findAll();
-        return $this->render('front/themes.html.twig', compact('themes'));
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('User must be logged in.');
+        }
+        return $user;
     }
 
     /**
-     * Displays courses for a given theme.
+     * Landing page / home route.
      *
-     * @param Theme $theme Theme entity whose courses we want to display
-     * @return Response HTTP response rendering the courses
+     * Redirects non-authenticated users to login,
+     * or authenticated users to the dashboard.
+     *
+     * @return Response
      */
-    #[Route('themes/{id}/courses', name: 'theme_courses')]
-    public function themeCourses(Theme $theme): Response
+    #[Route('/', name: 'app_home')]
+    public function home(): Response
     {
-        $courses = $theme->getCourses();
-        return $this->render('front/theme_courses.html.twig', compact('theme', 'courses'));
-    }
-
-    /**
-     * Displays a course and its lessons.
-     *
-     * Accessible only to logged-in users who purchased the course or one of its lessons.
-     *
-     * @param Course $course Course entity to display
-     * @param User|null $user Current logged-in user (injected by security)
-     * @return Response Redirects if access denied, otherwise displays the course
-     */
-    #[Route('courses/{id}', name: 'courses')]
-    #[IsGranted('ROLE_CLIENT')]
-    public function courses(Course $course, ?User $user = null): Response
-    {
-        /** @var User $user */
         $user = $this->getUser();
 
-        $hasAccess = false;
-        foreach ($course->getPurchases() as $purchase) {
-            if ($purchase->getUser() === $user) {
-                $hasAccess = true;
-                break;
-            }
+        if (!$user instanceof User) {
+            // Redirect to login if not authenticated
+            return $this->redirectToRoute('app_login');
         }
 
-        if (!$hasAccess) {
-            $this->addFlash('error', 'You must purchase this course to access it.');
-            return $this->redirectToRoute('front_themes');
-        }
-
-        return $this->render('front/courses.html.twig', compact('course'));
+        // Redirect authenticated users to the dashboard
+        return $this->redirectToRoute('front_dashboard');
     }
 
     /**
-     * Displays a lesson.
+     * Displays the dashboard for the current user.
      *
-     * Accessible only to logged-in users who purchased the lesson or the full course.
-     *
-     * @param Lesson $lesson Lesson entity to display
-     * @return Response Redirects if access denied, otherwise displays the lesson
+     * @return Response
      */
-    #[Route('lessons/{id}', name: 'lessons')]
-    #[IsGranted('ROLE_CLIENT')]
-    public function lessons(Lesson $lesson): Response
+    #[Route('/front/dashboard', name: 'front_dashboard')]
+    public function dashboard(): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        $user = $this->getCurrentUser();
 
-        $hasAccess = false;
+        $lessons = $this->lessonRepository->findAll();
+        $validatedLessons = array_filter(
+            $lessons,
+            fn(Lesson $lesson) => $user->hasValidatedLesson($lesson)
+        );
 
-        // Check direct lesson purchase
-        foreach ($lesson->getPurchases() as $purchase) {
-            if ($purchase->getUser() === $user) {
-                $hasAccess = true;
-                break;
-            }
-        }
+        $certifications = $user->getFrontCertifications();
 
-        // Check purchase of the full course
-        foreach ($lesson->getCourse()->getPurchases() as $purchase) {
-            if ($purchase->getUser() === $user) {
-                $hasAccess = true;
-                break;
-            }
-        }
-
-        if (!$hasAccess) {
-            $this->addFlash('error', 'You do not have access to this lesson.');
-            return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
-        }
-
-        $validated = $user->hasValidatedLesson($lesson);
-
-        return $this->render('front/lessons.html.twig', [
-            'lesson' => $lesson,
-            'validated' => $validated,
+        return $this->render('front/dashboard.html.twig', [
+            'user' => $user,
+            'lessons' => $lessons,
+            'validatedLessons' => $validatedLessons,
+            'certifications' => $certifications,
         ]);
     }
 
     /**
-     * Simulates a purchase of a course or lesson.
+     * Shows a single lesson page for the current user.
      *
-     * Accessible only to logged-in users with verified email.
-     *
-     * @param EntityManagerInterface $em Doctrine entity manager
-     * @param string $type Type of item to purchase ("course" or "lesson")
-     * @param int $id Item identifier
-     * @return Response Redirects after simulated purchase
+     * @param Lesson $lesson The lesson entity to display
+     * @return Response
      */
-    #[Route('purchase/{type}/{id}', name: 'purchase')]
-    #[IsGranted('ROLE_CLIENT')]
-    public function purchase(EntityManagerInterface $em, string $type, int $id): Response
+    #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
+    public function showLesson(Lesson $lesson): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        $user = $this->getCurrentUser();
+        $hasAccess = $this->frontService->userHasAccessToLesson($user, $lesson);
 
-        if (!$user->isVerified()) {
-            $this->addFlash('error', 'You must verify your email to make a purchase.');
-            return $this->redirectToRoute('front_themes');
-        }
-
-        $item = match($type) {
-            'course' => $em->getRepository(Course::class)->find($id),
-            'lesson' => $em->getRepository(Lesson::class)->find($id),
-            default => null,
-        };
-
-        if (!$item) {
-            $this->addFlash('error', 'Item not found.');
-            return $this->redirectToRoute('front_themes');
-        }
-
-        $purchase = new Purchase();
-        $purchase->sandboxPurchase($user, $item);
-        $em->persist($purchase);
-        $em->flush();
-
-        $this->addFlash('success', 'Simulated purchase successful!');
-        return $this->redirectToRoute('front_themes');
+        return $this->render('front/lessons.html.twig', [
+            'lesson' => $lesson,
+            'hasValidated' => $user->hasValidatedLesson($lesson),
+            'hasAccess' => $hasAccess,
+            'isVerified' => $user->isVerified(),
+        ]);
     }
 
     /**
-     * Marks a lesson as validated by the user.
+     * Simulates the purchase of a lesson for the current user.
      *
-     * If all lessons of a course are validated, a certification is automatically granted.
-     *
-     * @param EntityManagerInterface $em Doctrine entity manager
-     * @param Lesson $lesson Lesson entity to validate
-     * @return Response Redirects to the course after validation
+     * @param Lesson $lesson The lesson to purchase
+     * @return Response
      */
-    #[Route('validate-lesson/{id}', name: 'validate_lesson')]
-    #[IsGranted('ROLE_CLIENT')]
-    public function validateLesson(EntityManagerInterface $em, Lesson $lesson): Response
+    #[Route('/front/lesson/{id}/purchase', name: 'front_lesson_purchase')]
+    public function purchaseLesson(Lesson $lesson): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        $user = $this->getCurrentUser();
+        $this->frontService->simulatePurchase($user, $lesson);
 
-        $userLesson = $em->getRepository(UserLesson::class)
-                         ->findOneBy(['user' => $user, 'lesson' => $lesson]);
+        $this->addFlash('success', "Lesson '{$lesson->getTitle()}' has been successfully purchased.");
 
-        if (!$userLesson) {
-            $userLesson = new UserLesson();
-            $userLesson->setUser($user)
-                       ->setLesson($lesson);
-        }
-
-        $userLesson->setValidated(true);
-        $em->persist($userLesson);
-        $em->flush();
-
-        // Check if all lessons of the course are validated
-        $allValidated = true;
-        foreach ($lesson->getCourse()->getLessons() as $l) {
-            if (!$user->hasValidatedLesson($l)) {
-                $allValidated = false;
-                break;
-            }
-        }
-
-        if ($allValidated) {
-            $user->addCertificationFromCourse($lesson->getCourse());
-            $em->flush();
-        }
-
-        $this->addFlash('success', 'Lesson validated!');
-        return $this->redirectToRoute('front_courses', ['id' => $lesson->getCourse()->getId()]);
+        return $this->redirectToRoute('front_dashboard');
     }
 
     /**
-     * Displays the summary of certifications obtained by the user.
+     * Validates a lesson for the current user and generates certification if all lessons are completed.
      *
-     * Accessible only to logged-in users.
-     *
-     * @return Response HTTP response rendering certifications
+     * @param Lesson $lesson The lesson to validate
+     * @return Response
      */
-    #[Route('certifications', name: 'certifications')]
-    #[IsGranted('ROLE_CLIENT')]
-    public function certifications(): Response
+    #[Route('/front/lesson/{id}/validate', name: 'front_lesson_validate', methods: ['POST'])]
+    public function validateLesson(Lesson $lesson): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        $user = $this->getCurrentUser();
+        $this->frontService->validateLesson($user, $lesson);
+
+        $this->addFlash('success', "Lesson '{$lesson->getTitle()}' has been successfully validated.");
+
+        return $this->redirectToRoute('front_dashboard');
+    }
+
+    /**
+     * Grants a certification to the current user for a completed course.
+     *
+     * @param int $courseId The ID of the course to certify
+     * @return Response
+     */
+    #[Route('/front/course/{courseId}/certify', name: 'front_course_certify')]
+    public function addCertification(int $courseId): Response
+    {
+        $user = $this->getCurrentUser();
+
+        $course = $this->courseRepository->find($courseId);
+        if (!$course) {
+            throw $this->createNotFoundException('Course not found.');
+        }
+
+        $this->frontService->validateCourseForCertification($user, $course);
+
+        $this->addFlash('success', "Certification for course '{$course->getTitle()}' has been added.");
+
+        return $this->redirectToRoute('front_dashboard');
+    }
+
+    /**
+     * Lists all certifications the current user has obtained.
+     *
+     * @return Response
+     */
+    #[Route('/front/certifications', name: 'front_certifications')]
+    public function listCertifications(): Response
+    {
+        $user = $this->getCurrentUser();
         $certifications = $user->getFrontCertifications();
 
-        return $this->render('front/certifications.html.twig', compact('certifications'));
+        return $this->render('front/certifications.html.twig', [
+            'user' => $user,
+            'certifications' => $certifications,
+        ]);
     }
+
+    /**
+     * Displays the list of available themes or courses.
+     *
+     * @return Response
+     */
+    #[Route('/front/themes', name: 'front_themes')]
+    public function themes(): Response
+    {
+        // Utilisation du ThemeService pour récupérer tous les thèmes
+        $themes = $this->themeService->getAllThemes();
+
+        return $this->render('front/themes.html.twig', [
+            'themes' => $themes,
+        ]);
+    }
+
+    /**
+     * Shows all courses belonging to a specific theme.
+     *
+     * @param int $themeId The ID of the theme
+     * @return Response
+     */
+    #[Route('/front/theme/{themeId}/courses', name: 'front_theme_courses')]
+    public function themeCourses(int $themeId): Response
+    {
+        // Utilisation du ThemeService pour récupérer le thème avec ses cours
+        $theme = $this->themeService->getThemeWithCourses($themeId);
+
+        return $this->render('front/theme_courses.html.twig', [
+            'theme' => $theme,
+        ]);
+    }
+
+    /**
+     * Admin route: adds a course to a theme.
+     *
+     * @param Theme $theme
+     * @param Course $course
+     * @return Response
+     */
+    #[Route('/admin/theme/{themeId}/add-course/{courseId}', name: 'admin_theme_add_course')]
+    public function addCourseToTheme(Theme $theme, Course $course): Response
+    {
+        $this->themeService->addCourseToTheme($theme, $course);
+
+        $this->addFlash('success', "Le cours '{$course->getTitle()}' a été ajouté au thème '{$theme->getName()}'.");
+
+        return $this->redirectToRoute('admin_theme_edit', ['id' => $theme->getId()]);
+    }
+
+    #[Route('/front/course/{id}/purchase', name: 'front_course_purchase')]
+    public function purchaseCourse(Course $course): Response
+    {
+        $user = $this->getCurrentUser();
+
+        // Appelle ton service pour gérer l'achat
+        $this->frontService->simulateCoursePurchase($user, $course);
+
+        $this->addFlash('success', "Le cours '{$course->getTitle()}' a été acheté avec succès !");
+
+        return $this->redirectToRoute('front_dashboard');
+    }
+
+    #[Route('/front/course/{id}', name: 'front_course_show')]
+    public function showCourse(Course $course): Response
+    {
+        return $this->render('front/courses.html.twig', [
+            'course' => $course,
+        ]);
+    }
+
 }

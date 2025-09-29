@@ -159,4 +159,37 @@ trait TestHelpers
 
         return $lesson;
     }
+
+        protected function createTheme(string $name = 'Test Theme'): Theme
+    {
+        $theme = new Theme();
+        $theme->setName($name);
+        $this->em->persist($theme);
+        $this->em->flush();
+        return $theme;
+    }
+
+    protected function createCourse(string $title, float $price, Theme $theme): Course
+    {
+        $course = new Course();
+        $course->setTitle($title)
+            ->setPrice($price)
+            ->setTheme($theme);
+        $this->em->persist($course);
+        $this->em->flush();
+        return $course;
+    }
+
+    protected function createLesson(string $title, float $price, Course $course, Theme $theme): Lesson
+    {
+        $lesson = new Lesson();
+        $lesson->setTitle($title)
+            ->setPrice($price)
+            ->setCourse($course)
+            ->setTheme($theme);
+        $this->em->persist($lesson);
+        $this->em->flush();
+        return $lesson;
+    }
+
 }

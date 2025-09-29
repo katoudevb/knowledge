@@ -43,8 +43,14 @@ class FrontControllerTest extends WebTestCase
         // Purchase the full course to grant access to all lessons
         $this->purchaseCourse($user, $lesson->getCourse(), $lesson->getCourse()->getPrice());
 
+        // Generate the URL using the router service
+        $url = $this->client->getContainer()->get('router')->generate(
+            'front_lesson_show',
+            ['id' => $lesson->getId()]
+        );
+
         // Access the lesson page and follow redirections
-        $crawler = $this->client->request('GET', '/lessons/'.$lesson->getId());
+        $crawler = $this->client->request('GET', $url);
         while ($this->client->getResponse()->isRedirection()) {
             $crawler = $this->client->followRedirect();
         }
@@ -63,8 +69,11 @@ class FrontControllerTest extends WebTestCase
         $user = $this->createUser();
         $this->client->loginUser($user);
 
+        // Generate the URL using the router service
+        $url = $this->client->getContainer()->get('router')->generate('front_certifications');
+
         // Access the certifications page
-        $this->client->request('GET', '/certifications');
+        $this->client->request('GET', $url);
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('.certification-list');

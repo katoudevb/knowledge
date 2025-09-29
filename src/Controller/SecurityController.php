@@ -45,7 +45,6 @@ class SecurityController extends AbstractController
      *
      * @return void
      *
-     * @throws \LogicException Always thrown to indicate this method is intercepted
      */
     #[Route(path: '/logout', name: 'app_logout')]
 public function logout(): void
