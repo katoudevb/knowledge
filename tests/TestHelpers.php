@@ -43,6 +43,7 @@ trait TestHelpers
      */
     protected function purgeEntities(): void
     {
+        $this->em->createQuery('DELETE FROM App\Entity\Certification')->execute();
         $this->em->createQuery('DELETE FROM App\Entity\UserLesson')->execute();
         $this->em->createQuery('DELETE FROM App\Entity\Purchase')->execute();
         $this->em->createQuery('DELETE FROM App\Entity\User')->execute();
@@ -192,4 +193,33 @@ trait TestHelpers
         return $lesson;
     }
 
+    /**
+     * Valide toutes les leçons d'un cours pour un utilisateur,
+     * afin de générer une certification.
+     */
+    protected function validateCourse(User $user, Course $course): void
+    {
+        foreach ($course->getLessons() as $lesson) {
+            // Si le UserLesson existe déjà, récupère-le, sinon crée-le
+            $userLesson = $this->em->getRepository(UserLesson::class)
+                                ->findOneBy(['user' => $user, 'lesson' => $lesson]);
+
+            if (!$userLesson) {
+                $userLesson = $this->createUserLesson($user, $lesson, true);
+            } else {
+                $userLesson->setValidated(true);
+            }
+
+            $this->em->persist($userLesson);
+        }
+
+        // Crée la certification pour ce cours
+        $certification = new \App\Entity\Certification();
+        $certification->setUser($user)
+                    ->setCourse($course)
+                    ->setObtainedAt(new \DateTimeImmutable());
+
+        $this->em->persist($certification);
+        $this->em->flush();
+    }
 }
