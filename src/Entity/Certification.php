@@ -17,7 +17,7 @@ class Certification
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'certifications')]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')] // <-- ajout onDelete
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')] 
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'certifications')]
