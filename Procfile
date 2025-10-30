@@ -1,4 +1,5 @@
-web: frankenphp public/index.php
+web:
+
 
 
 
