@@ -1,3 +1,4 @@
-web: frankenphp public/index.php
+web: caddy run
+
 
 
