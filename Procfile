@@ -1,2 +1,3 @@
-web: vendor/bin/frankenphp public/index.php
+web: frankenphp public/index.php
+
 
