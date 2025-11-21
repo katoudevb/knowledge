@@ -33,7 +33,7 @@ class EmailVerifier
      */
     public function sendEmailConfirmation(string $verifyEmailRouteName, User $user, TemplatedEmail $email): void
     {
-        // Generate a signed URL for email confirmation
+        // Générer le lien signé
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             $verifyEmailRouteName,
             (string) $user->getId(),
@@ -41,15 +41,21 @@ class EmailVerifier
             ['id' => $user->getId()]
         );
 
-        // Add signature information to the email context
-        $context = $email->getContext();
-        $context['signedUrl'] = $signatureComponents->getSignedUrl();
-        $context['expiresAtMessageKey'] = $signatureComponents->getExpirationMessageKey();
-        $context['expiresAtMessageData'] = $signatureComponents->getExpirationMessageData();
+        // Ajouter le contexte complet pour Twig (HTML et texte)
+        $email->context([
+            'user' => $user,
+            'signedUrl' => $signatureComponents->getSignedUrl(),
+            'expiresAtMessageKey' => $signatureComponents->getExpirationMessageKey(),
+            'expiresAtMessageData' => $signatureComponents->getExpirationMessageData(),
+        ]);
 
-        $email->context($context);
+        // Ajouter le template texte pour MailHog / clients texte
+        $email->textTemplate('registration/confirmation_email.txt.twig');
 
-        // Send the email
+        // S'assurer que le HTML est utilisé
+        $email->htmlTemplate('registration/confirmation_email.html.twig');
+
+        // Envoyer l'email
         $this->mailer->send($email);
     }
 
@@ -63,14 +69,12 @@ class EmailVerifier
      */
     public function handleEmailConfirmation(Request $request, User $user): void
     {
-        // Validate the email using the signed URL
         $this->verifyEmailHelper->validateEmailConfirmationFromRequest(
             $request,
             (string) $user->getId(),
             (string) $user->getEmail()
         );
 
-        // Mark the user as verified
         $user->setIsVerified(true);
 
         $this->entityManager->persist($user);
