@@ -27,26 +27,8 @@ use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
  */
 class RegistrationController extends AbstractController
 {
-    /**
-     * Constructor.
-     *
-     * @param EmailVerifier $emailVerifier Service used to handle email verification
-     */
     public function __construct(private EmailVerifier $emailVerifier) {}
 
-    /**
-     * Displays and processes the registration form.
-     *
-     * This method:
-     *  - Creates a new User entity
-     *  - Delegates password hashing and persistence to the UserService
-     *  - Sends an email confirmation message
-     *  - Redirects to the login page after successful registration
-     *
-     * @param Request $request The current HTTP request
-     * @param UserService $userService Service handling user creation and password hashing
-     * @return Response HTTP response containing the registration form or redirect
-     */
     #[Route('/register', name: 'app_register')]
     public function register(Request $request, UserService $userService): Response
     {
@@ -61,18 +43,24 @@ class RegistrationController extends AbstractController
             // Delegate user creation and password hashing to the service
             $userService->registerUser($user, $plainPassword);
 
-            // Send email confirmation
-            $this->emailVerifier->sendEmailConfirmation(
-                'app_verify_email',
-                $user,
-                (new TemplatedEmail())
-                    ->from(new Address('noreply@knowledge.com', 'Knowledge Learning'))
-                    ->to($user->getEmail())
-                    ->subject('Please confirm your email address')
-                    ->htmlTemplate('registration/confirmation_email.html.twig')
-            );
+            // Send email confirmation with debug
+            try {
+                $this->emailVerifier->sendEmailConfirmation(
+                    'app_verify_email',
+                    $user,
+                    (new TemplatedEmail())
+                        ->from(new Address('bricotteaux@alwaysdata.net', 'Knowledge Learning'))
+                        ->to($user->getEmail())
+                        ->subject('Merci de confirmer votre adresse e-mail')
+                        ->htmlTemplate('registration/confirmation_email.html.twig')
+                );
+            } catch (\Exception $e) {
+                // Affiche l'erreur sur la page ou dans les logs
+                dump($e->getMessage()); // temporaire pour debug
+                $this->addFlash('error', 'Erreur lors de l\'envoi de l\'email : '.$e->getMessage());
+            }
 
-            $this->addFlash('success', 'Your account has been created. Please confirm your email address.');
+            $this->addFlash('success', 'Votre compte a été créé. Veuillez confirmer votre adresse e-mail.');
 
             return $this->redirectToRoute('app_login');
         }
@@ -82,20 +70,6 @@ class RegistrationController extends AbstractController
         ]);
     }
 
-    /**
-     * Handles email verification after the user clicks the confirmation link.
-     *
-     * This method:
-     *  - Validates the signed email confirmation link
-     *  - Handles exceptions for expired or invalid links
-     *  - Adds flash messages for success or error
-     *  - Redirects the user to the login page after successful verification
-     *
-     * @param Request $request Current HTTP request containing the verification token
-     * @param TranslatorInterface $translator Translator for flash messages
-     * @param UserRepository $userRepository Repository to retrieve the User entity
-     * @return Response HTTP redirect response
-     */
     #[Route('/verify/email', name: 'app_verify_email')]
     public function verifyUserEmail(
         Request $request,

@@ -49,9 +49,6 @@ class EmailVerifier
             'expiresAtMessageData' => $signatureComponents->getExpirationMessageData(),
         ]);
 
-        // Ajouter le template texte pour MailHog / clients texte
-        $email->textTemplate('registration/confirmation_email.txt.twig');
-
         // S'assurer que le HTML est utilisé
         $email->htmlTemplate('registration/confirmation_email.html.twig');
 
