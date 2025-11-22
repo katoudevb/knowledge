@@ -38,7 +38,7 @@ class PurchaseControllerTest extends WebTestCase
         $this->client->request('POST', '/front/course/'.$course->getId().'/purchase');
 
         // Vérifie la redirection vers le dashboard
-        $this->assertResponseRedirects('/front/dashboard');
+        $this->assertResponseRedirects('/front/course/'.$course->getId());
 
         // Vérification en base
         $purchase = $this->em->getRepository(Purchase::class)

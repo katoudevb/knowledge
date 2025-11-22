@@ -12,13 +12,13 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Examples: "Music", "Computer Science", etc.
  *
- * @property int|null $id Unique identifier of the theme.
- * @property string|null $name Name of the theme.
- * @property Collection<int, Course> $courses Courses associated with this theme.
- * @property \DateTimeImmutable|null $createdAt Timestamp when the theme was created.
- * @property \DateTimeImmutable|null $updatedAt Timestamp when the theme was last updated.
- * @property User|null $createdBy User who created the theme.
- * @property User|null $updatedBy User who last updated the theme.
+ * @property int|null $id
+ * @property string|null $name
+ * @property Collection<int, Course> $courses
+ * @property \DateTimeImmutable|null $createdAt
+ * @property \DateTimeImmutable|null $updatedAt
+ * @property User|null $createdBy
+ * @property User|null $updatedBy
  */
 #[ORM\Entity(repositoryClass: ThemeRepository::class)]
 class Theme
@@ -51,6 +51,11 @@ class Theme
     #[ORM\JoinColumn(name: "updated_by", referencedColumnName: "id", nullable: true)]
     private ?User $updatedBy = null;
 
+    // -----------------------------
+    // Runtime property for accessible courses
+    // -----------------------------
+    private array $accessibleCourses = [];
+
     public function __construct()
     {
         $this->courses = new ArrayCollection();
@@ -78,6 +83,20 @@ class Theme
                 $course->setTheme(null);
             }
         }
+        return $this;
+    }
+
+    // -----------------------------
+    // Accessible courses (runtime only)
+    // -----------------------------
+    public function getAccessibleCourses(): array
+    {
+        return $this->accessibleCourses;
+    }
+
+    public function setAccessibleCourses(array $courses): static
+    {
+        $this->accessibleCourses = $courses;
         return $this;
     }
 

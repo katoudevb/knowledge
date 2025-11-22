@@ -10,9 +10,6 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * Represents an application user.
- */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'An account with this email already exists')]
@@ -35,25 +32,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $isVerified = false;
 
-    // Purchases via Purchase entity
+    // ---- Purchases (renamed) ----
     #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'user')]
-    private Collection $achats;
+    private Collection $purchases;
 
-    // Certifications
+    // ---- Certifications ----
     #[ORM\OneToMany(targetEntity: Certification::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $certifications;
 
-    // User Lessons
+    // ---- User Lessons (renamed) ----
     #[ORM\OneToMany(targetEntity: UserLesson::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $leconsUtilisateur;
+    private Collection $userLessons;
 
-    // -----------------------------
-    // New: Purchased Courses
-    // -----------------------------
-    /**
-     * Courses purchased by the user.
-     * Many-to-Many relation: a user can buy many courses, a course can be bought by many users.
-     */
+    // Purchased Courses (unchanged)
     #[ORM\ManyToMany(targetEntity: Course::class)]
     #[ORM\JoinTable(name: "user_courses")]
     private Collection $purchasedCourses;
@@ -75,15 +66,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->achats = new ArrayCollection();
+        $this->purchases = new ArrayCollection();
         $this->certifications = new ArrayCollection();
-        $this->leconsUtilisateur = new ArrayCollection();
-        $this->purchasedCourses = new ArrayCollection(); // initialize purchased courses
+        $this->userLessons = new ArrayCollection();
+        $this->purchasedCourses = new ArrayCollection();
     }
 
-    // -----------------------------
-    // Basic getters/setters
-    // -----------------------------
+    // BASIC FIELDS
     public function getId(): ?int { return $this->id; }
     public function getEmail(): ?string { return $this->email; }
     public function setEmail(string $email): static { $this->email = $email; return $this; }
@@ -96,30 +85,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function isVerified(): ?bool { return $this->isVerified; }
     public function setIsVerified(bool $isVerified): static { $this->isVerified = $isVerified; return $this; }
 
-    // -----------------------------
-    // Purchases via Purchase entity
-    // -----------------------------
-    public function getAchats(): Collection { return $this->achats; }
-    public function addAchat(Purchase $achat): static
+    // ---- PURCHASES ----
+    public function getPurchases(): Collection { return $this->purchases; }
+
+    public function addPurchase(Purchase $purchase): static
     {
-        if (!$this->achats->contains($achat)) {
-            $this->achats->add($achat);
-            $achat->setUser($this);
-        }
-        return $this;
-    }
-    public function removeAchat(Purchase $achat): static
-    {
-        if ($this->achats->removeElement($achat) && $achat->getUser() === $this) {
-            $achat->setUser(null);
+        if (!$this->purchases->contains($purchase)) {
+            $this->purchases->add($purchase);
+            $purchase->setUser($this);
         }
         return $this;
     }
 
-    // -----------------------------
-    // Certifications
-    // -----------------------------
+    public function removePurchase(Purchase $purchase): static
+    {
+        if ($this->purchases->removeElement($purchase) && $purchase->getUser() === $this) {
+            $purchase->setUser(null);
+        }
+        return $this;
+    }
+
+    // ---- CERTIFICATIONS ----
     public function getCertifications(): Collection { return $this->certifications; }
+
     public function addCertification(Certification $certification): static
     {
         if (!$this->certifications->contains($certification)) {
@@ -128,6 +116,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
         return $this;
     }
+
     public function removeCertification(Certification $certification): static
     {
         if ($this->certifications->removeElement($certification) && $certification->getUser() === $this) {
@@ -135,38 +124,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
         return $this;
     }
+
     public function getFrontCertifications(): Collection
     {
         return $this->getCertifications();
     }
 
-    // -----------------------------
-    // User Lessons
-    // -----------------------------
-    public function getLeconsUtilisateur(): Collection { return $this->leconsUtilisateur; }
-    public function addLeconUtilisateur(UserLesson $lecon): static
+    // ---- USER LESSONS ----
+    public function getUserLessons(): Collection { return $this->userLessons; }
+
+    public function addUserLesson(UserLesson $lesson): static
     {
-        if (!$this->leconsUtilisateur->contains($lecon)) {
-            $this->leconsUtilisateur->add($lecon);
-            $lecon->setUser($this);
-        }
-        return $this;
-    }
-    public function removeLeconUtilisateur(UserLesson $lecon): static
-    {
-        if ($this->leconsUtilisateur->removeElement($lecon) && $lecon->getUser() === $this) {
-            $lecon->setUser(null);
+        if (!$this->userLessons->contains($lesson)) {
+            $this->userLessons->add($lesson);
+            $lesson->setUser($this);
         }
         return $this;
     }
 
-    // -----------------------------
-    // Purchased Courses
-    // -----------------------------
-    public function getPurchasedCourses(): Collection
+    public function removeUserLesson(UserLesson $lesson): static
     {
-        return $this->purchasedCourses;
+        if ($this->userLessons->removeElement($lesson) && $lesson->getUser() === $this) {
+            $lesson->setUser(null);
+        }
+        return $this;
     }
+
+    // ---- PURCHASED COURSES ----
+    public function getPurchasedCourses(): Collection { return $this->purchasedCourses; }
 
     public function addPurchasedCourse(Course $course): self
     {
@@ -182,37 +167,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // -----------------------------
-    // Front-end helpers
-    // -----------------------------
-    public function hasValidatedLesson(Lesson $lecon): bool
+    // ---- HELPERS ----
+    public function hasValidatedLesson(Lesson $lesson): bool
     {
-        foreach ($this->leconsUtilisateur as $userLesson) {
-            if ($userLesson->getLesson() === $lecon && $userLesson->isValidated()) {
+        foreach ($this->userLessons as $userLesson) {
+            if ($userLesson->getLesson() === $lesson && $userLesson->isValidated()) {
                 return true;
             }
         }
         return false;
     }
 
-    public function addCertificationFromCourse(Course $cours): static
+    public function addCertificationFromCourse(Course $course): static
     {
         foreach ($this->certifications as $cert) {
-            if ($cert->getCourse() === $cours) return $this;
+            if ($cert->getCourse() === $course) return $this;
         }
 
         $certification = new Certification();
         $certification->setUser($this)
-                      ->setCourse($cours)
+                      ->setCourse($course)
                       ->setObtainedAt(new \DateTimeImmutable());
 
         $this->certifications->add($certification);
         return $this;
     }
 
-    // -----------------------------
-    // Audit Getters / Setters
-    // -----------------------------
+    // ---- AUDIT ----
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function setCreatedAt(\DateTimeImmutable $createdAt): static { $this->createdAt = $createdAt; return $this; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
