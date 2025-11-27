@@ -1,0 +1,125 @@
+/* ----- Style global ----- */
+body {
+    font-family: 'Comic Neue', sans-serif;
+    background-color: #f1f8fc;
+    color: #384050;
+    margin: 0;
+    padding: 0;
+}
+
+/* ----- Conteneur principal ----- */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ----- Boutons personnalisés (override Bootstrap) ----- */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0074c7;
+}
+.btn-primary:hover {
+    background-color: #00497c;
+}
+
+.btn-success {
+    background-color: #82b864;
+}
+.btn-success:hover {
+    background-color: #5a8c3e;
+}
+
+.btn-danger {
+    background-color: #cd2c2e;
+}
+.btn-danger:hover {
+    background-color: #a02022;
+}
+
+/* ----- Titres ----- */
+h1, h2, h3 {
+    color: #00497c;
+    margin-bottom: 1rem;
+}
+
+/* ----- Liens ----- */
+a {
+    text-decoration: none;
+    color: #0074c7;
+}
+a:hover {
+    color: #00497c;
+}
+
+/* ----- Tableaux ----- */
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.table-custom th,
+.table-custom td {
+    padding: 0.5rem;
+    border: 1px solid #384050;
+}
+
+/* Rendre les tableaux scrollables sur petits écrans */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* ----- Media Queries pour le responsive ----- */
+
+/* Écrans ≤ 992px (tablettes) */
+@media (max-width: 992px) {
+    body {
+        font-size: 0.95rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Écrans ≤ 768px (mobiles) */
+@media (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+}
+
+/* Écrans ≤ 576px (petits smartphones) */
+@media (max-width: 576px) {
+    body {
+        font-size: 0.9rem;
+    }
+
+    header img {
+        max-width: 120px;
+        height: auto;
+    }
+}
