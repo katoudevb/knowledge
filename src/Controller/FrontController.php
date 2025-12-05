@@ -29,7 +29,7 @@ class FrontController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            throw $this->createAccessDeniedException('User must be logged in.');
+            throw $this->createAccessDeniedException("L'/utilisateur doit être connecté");
         }
         return $user;
     }
@@ -40,7 +40,7 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->simulateSandboxPurchase($user, $lesson);
 
-        $this->addFlash('success', "Lesson '{$lesson->getTitle()}' has been purchased in sandbox mode!");
+        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' a été acheté en mode bac à sable !");
 
         return $this->redirectToRoute('front_dashboard');
     }
@@ -51,7 +51,7 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->simulateSandboxPurchase($user, $course);
 
-        $this->addFlash('success', "Course '{$course->getTitle()}' has been purchased in sandbox mode!");
+        $this->addFlash('success', "Cours '{$course->getTitle()}' a été acheté en mode bac à sable !");
 
         return $this->redirectToRoute('front_course_show', ['id' => $course->getId()]);
     }
@@ -118,7 +118,7 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->validateLesson($user, $lesson);
 
-        $this->addFlash('success', "Lesson '{$lesson->getTitle()}' has been successfully validated.");
+        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' a été validée avec succès !");
 
         return $this->redirectToRoute('front_dashboard');
     }
