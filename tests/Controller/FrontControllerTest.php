@@ -34,10 +34,10 @@ class FrontControllerTest extends WebTestCase
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Crée la leçon avec son thème et son cours
+        // Create the lesson with its theme and course
         $lesson = $this->createLessonWithTheme('Test Lesson', 50, 'Theme Test', 'Test Course');
 
-        // Achat du cours complet pour donner accès à toutes les leçons
+        // Purchase the full course to grant access to all lessons
         $this->purchaseCourse($user, $lesson->getCourse(), $lesson->getCourse()->getPrice());
 
         $url = $this->client->getContainer()->get('router')->generate(
@@ -62,21 +62,21 @@ class FrontControllerTest extends WebTestCase
         $user = $this->createUser();
         $this->client->loginUser($user);
 
-        // Crée un cours et une leçon pour générer une certification
+        // Create a course and a lesson to generate a certification
         $lesson = $this->createLessonWithTheme('Test Lesson', 50, 'Theme Test', 'Test Course');
         $course = $lesson->getCourse();
 
-        // Simule l'achat et la validation pour générer la certification
+        // Simulate the purchase and validation to generate the certification
         $this->purchaseCourse($user, $course, $course->getPrice());
         $this->validateCourse($user, $course);
         
-        // Force Doctrine à recharger l'utilisateur
+        // Force Doctrine to reload the user
         $this->em->refresh($user);
 
-        // Accède à la page des certifications
+        // Access the certifications page
         $crawler = $this->client->request('GET', '/front/certifications');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.certification-list'); // La div existe maintenant
+        $this->assertSelectorExists('.certification-list'); // The div now exists
     }
 }

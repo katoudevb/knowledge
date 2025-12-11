@@ -13,23 +13,23 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
 /**
  * Trait TestHelpers
- * 
- * Fournit des méthodes utilitaires pour les tests fonctionnels :
- * - Initialisation du client et de l'EntityManager
- * - Purge des entités pour un état propre avant chaque test
- * - Création d'utilisateurs, d'achats et de leçons avec thème
+ *
+ * Provides utility methods for functional tests:
+ * - Initialization of Symfony client and EntityManager
+ * - Purging entities for a clean database state
+ * - Creation of users, purchases, lessons, courses, and themes
  */
 trait TestHelpers
 {
-    /** @var KernelBrowser Client Symfony pour faire des requêtes */
+    /** @var KernelBrowser Symfony client to make requests */
     protected KernelBrowser $client;
 
-    /** @var EntityManagerInterface EntityManager pour interagir avec la BDD */
+    /** @var EntityManagerInterface EntityManager to interact with the database */
     protected EntityManagerInterface $em;
 
     /**
-     * Initialise le client et l'EntityManager.
-     * ⚠️ Appeler dans le setUp() de chaque test.
+     * Initializes the Symfony client and EntityManager.
+     * ⚠️ Call this in the setUp() of each test.
      */
     protected function initTest(): void
     {
@@ -38,8 +38,8 @@ trait TestHelpers
     }
 
     /**
-     * Supprime toutes les entités User, Purchase et UserLesson.
-     * Permet d'avoir une BDD propre avant chaque test.
+     * Purges User, Purchase, UserLesson, and Certification entities.
+     * Ensures a clean database state before each test.
      */
     protected function purgeEntities(): void
     {
@@ -51,7 +51,11 @@ trait TestHelpers
     }
 
     /**
-     * Crée un utilisateur et le persiste.
+     * Creates a User and persists it to the database.
+     *
+     * @param string|null $email The email for the user. If null, a unique email is generated.
+     * @param bool $verified Whether the user is verified. Defaults to true.
+     * @return User
      */
     protected function createUser(?string $email = null, bool $verified = true): User
     {
@@ -71,7 +75,12 @@ trait TestHelpers
     }
 
     /**
-     * Crée un achat pour une leçon.
+     * Creates a Purchase entity for a lesson.
+     *
+     * @param User $user
+     * @param Lesson $lesson
+     * @param int|null $amount
+     * @return Purchase
      */
     protected function purchaseLesson(User $user, Lesson $lesson, ?int $amount = null): Purchase
     {
@@ -93,7 +102,12 @@ trait TestHelpers
     }
 
     /**
-     * Crée un achat pour un cours.
+     * Creates a Purchase entity for a course.
+     *
+     * @param User $user
+     * @param Course $course
+     * @param int|null $amount
+     * @return Purchase
      */
     protected function purchaseCourse(User $user, Course $course, ?int $amount = null): Purchase
     {
@@ -110,7 +124,12 @@ trait TestHelpers
     }
 
     /**
-     * Crée un UserLesson pour suivre la validation d'une leçon.
+     * Creates a UserLesson entity to track lesson validation.
+     *
+     * @param User $user
+     * @param Lesson $lesson
+     * @param bool $validated
+     * @return UserLesson
      */
     protected function createUserLesson(User $user, Lesson $lesson, bool $validated = false): UserLesson
     {
@@ -126,8 +145,14 @@ trait TestHelpers
     }
 
     /**
-     * Crée une leçon avec un thème et un cours associés.
-     * ⚠️ Permet d'éviter les erreurs theme_id cannot be null.
+     * Creates a lesson with an associated theme and course.
+     * ⚠️ Avoids errors like "theme_id cannot be null".
+     *
+     * @param string $lessonTitle
+     * @param float $price
+     * @param string $themeName
+     * @param string $courseTitle
+     * @return Lesson
      */
     protected function createLessonWithTheme(
         string $lessonTitle = 'Test Lesson',
@@ -136,19 +161,20 @@ trait TestHelpers
         string $courseTitle = 'Test Course'
     ): Lesson
     {
-        // Créer un thème
+        // Create a theme
         $theme = new Theme();
         $theme->setName($themeName);
         $this->em->persist($theme);
 
-        // Créer un cours
+        // Create a course
         $course = new Course();
         $course->setTitle($courseTitle)
                ->setPrice($price)
                ->setTheme($theme);
         $this->em->persist($course);
 
-        // Créer la leçon
+        
+        // Create the lesson
         $lesson = new Lesson();
         $lesson->setTitle($lessonTitle)
                ->setPrice($price)
@@ -161,7 +187,13 @@ trait TestHelpers
         return $lesson;
     }
 
-        protected function createTheme(string $name = 'Test Theme'): Theme
+    /**
+     * Creates a Theme entity.
+     *
+     * @param string $name
+     * @return Theme
+     */
+    protected function createTheme(string $name = 'Test Theme'): Theme
     {
         $theme = new Theme();
         $theme->setName($name);
@@ -170,37 +202,56 @@ trait TestHelpers
         return $theme;
     }
 
+    /**
+     * Creates a Course entity linked to a Theme.
+     *
+     * @param string $title
+     * @param float $price
+     * @param Theme $theme
+     * @return Course
+     */
     protected function createCourse(string $title, float $price, Theme $theme): Course
     {
         $course = new Course();
         $course->setTitle($title)
-            ->setPrice($price)
-            ->setTheme($theme);
+               ->setPrice($price)
+               ->setTheme($theme);
         $this->em->persist($course);
         $this->em->flush();
         return $course;
     }
 
+    /**
+     * Creates a Lesson entity linked to a Course and a Theme.
+     *
+     * @param string $title
+     * @param float $price
+     * @param Course $course
+     * @param Theme $theme
+     * @return Lesson
+     */
     protected function createLesson(string $title, float $price, Course $course, Theme $theme): Lesson
     {
         $lesson = new Lesson();
         $lesson->setTitle($title)
-            ->setPrice($price)
-            ->setCourse($course)
-            ->setTheme($theme);
+               ->setPrice($price)
+               ->setCourse($course)
+               ->setTheme($theme);
         $this->em->persist($lesson);
         $this->em->flush();
         return $lesson;
     }
 
     /**
-     * Valide toutes les leçons d'un cours pour un utilisateur,
-     * afin de générer une certification.
+     * Validates all lessons of a course for a user to generate a certification.
+     *
+     * @param User $user
+     * @param Course $course
      */
     protected function validateCourse(User $user, Course $course): void
     {
         foreach ($course->getLessons() as $lesson) {
-            // Si le UserLesson existe déjà, récupère-le, sinon crée-le
+            // If the UserLesson already exists, retrieve it; otherwise, create it.
             $userLesson = $this->em->getRepository(UserLesson::class)
                                 ->findOneBy(['user' => $user, 'lesson' => $lesson]);
 
@@ -213,11 +264,12 @@ trait TestHelpers
             $this->em->persist($userLesson);
         }
 
-        // Crée la certification pour ce cours
+        
+        // Create the certification for this course
         $certification = new \App\Entity\Certification();
         $certification->setUser($user)
-                    ->setCourse($course)
-                    ->setObtainedAt(new \DateTimeImmutable());
+                      ->setCourse($course)
+                      ->setObtainedAt(new \DateTimeImmutable());
 
         $this->em->persist($certification);
         $this->em->flush();
