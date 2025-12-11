@@ -17,12 +17,12 @@
                     <div class="card-body d-flex flex-column justify-content-between">
                         <h5 class="card-title">{{ lesson.title }}</h5>
 
-                        {# Contenu de la leçon #}
+                        {# Lesson content #}
                         {% if lesson.content %}
                             <div class="card-text lesson-content">{{ lesson.content|raw }}</div>
                         {% endif %}
 
-                        {# Bouton acheter / consulter côté front #}
+                        {# Buy / view button on front-end #}
                         {% if lesson.id in purchasedLessonIds %}
                             <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">
                                 Consulter la leçon
@@ -51,7 +51,7 @@
     </div>
 </div>
 
-{# SCRIPT STRIPE — IDENTIQUE À CELUI DU FICHIER COURS #}
+{# STRIPE SCRIPT — SAME AS IN COURSE FILE #}
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 const stripe = Stripe("{{ stripePublicKey|default('') }}");

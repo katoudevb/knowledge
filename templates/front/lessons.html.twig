@@ -71,7 +71,7 @@
                             {% endif %}
 
                             {% if lesson.videoUrl %}
-                                <h6 class="mt-3">Vidéo :</h6>
+                                <h6 class="mt-3">Vidéo:</h6>
                                 {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
                                 {% set embedUrl = cleanUrl
                                     | replace({'https://www.youtube.com/watch?v=': 'https://www.youtube.com/embed/'})
@@ -81,7 +81,7 @@
                                 </div>
                             {% endif %}
 
-                            {# --- Gestion des boutons --- #}
+                            {# --- Button management --- #}
                             {% if isCoursePurchased %}
                                 {% if lesson.id in purchasedLessonIds %}
                                     <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">

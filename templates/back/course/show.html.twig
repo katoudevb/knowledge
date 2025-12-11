@@ -32,10 +32,12 @@
                     <div class="card-body d-flex flex-column justify-content-between">
                         <h5 class="card-title">{{ lesson.title }}</h5>
                         {% if lesson.content %}
+                            {# Show a short preview of the lesson content #}
                             <p class="card-text">{{ lesson.content|length > 100 ? lesson.content|slice(0, 100) ~ '...' : lesson.content }}</p>
                         {% endif %}
 
                         {% if lesson.videoUrl %}
+                            {# Embed the lesson video #}
                             <h6 class="mt-3">Vidéo :</h6>
                             {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
                             {% set embedUrl = cleanUrl
@@ -46,7 +48,7 @@
                             </div>
                         {% endif %}
 
-                        {# Bouton pour consulter la leçon (back-office uniquement) #}
+                        {# Button to view the lesson (back-office only) #}
                         <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">
                             Consulter la leçon
                         </a>

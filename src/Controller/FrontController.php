@@ -18,6 +18,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Stripe\StripeClient;
 
+/**
+ * Controller handling front-end actions such as displaying lessons,
+ * courses, themes, handling purchases, and Stripe checkouts.
+ */
 class FrontController extends AbstractController
 {
     public function __construct(
@@ -27,6 +31,12 @@ class FrontController extends AbstractController
         private ThemeService $themeService
     ) {}
 
+    /**
+     * Get the currently logged-in user.
+     *
+     * @throws AccessDeniedException If no user is logged in
+     * @return User The current user
+     */
     private function getCurrentUser(): User
     {
         $user = $this->getUser();
@@ -36,6 +46,12 @@ class FrontController extends AbstractController
         return $user;
     }
 
+    /**
+     * Simulate a sandbox purchase for a lesson.
+     *
+     * @param Lesson $lesson The lesson to purchase
+     * @return Response Redirects to the lesson page
+     */
     #[Route('/front/lesson/{id}/purchase', name: 'front_lesson_purchase')]
     public function purchaseLesson(Lesson $lesson): Response
     {
@@ -46,6 +62,12 @@ class FrontController extends AbstractController
         return $this->redirectToRoute('front_lesson_show', ['id' => $lesson->getId()]);
     }
 
+    /**
+     * Simulate a sandbox purchase for a course.
+     *
+     * @param Course $course The course to purchase
+     * @return Response Redirects to the course page
+     */
     #[Route('/front/course/{id}/purchase', name: 'front_course_purchase')]
     public function purchaseCourse(Course $course): Response
     {
@@ -53,10 +75,16 @@ class FrontController extends AbstractController
         $this->frontService->simulateSandboxPurchase($user, $course);
 
         $this->addFlash('success', "Cours '{$course->getTitle()}' acheté !");
-        // Rediriger vers la page du cours après achat
         return $this->redirectToRoute('front_course_show', ['id' => $course->getId()]);
     }
 
+    /**
+     * Create a Stripe checkout session for a lesson purchase.
+     *
+     * @param Lesson $lesson The lesson to purchase
+     * @param Request $request The current request
+     * @return Response JSON response for AJAX or redirect to Stripe checkout
+     */
     #[Route('/front/lesson/{id}/checkout', name: 'stripe_checkout_lesson', methods: ['POST'])]
     public function stripeCheckoutLesson(Lesson $lesson, Request $request): Response
     {
@@ -85,6 +113,13 @@ class FrontController extends AbstractController
         return new RedirectResponse($session->url);
     }
 
+    /**
+     * Create a Stripe checkout session for a course purchase.
+     *
+     * @param Course $course The course to purchase
+     * @param Request $request The current request
+     * @return Response JSON response for AJAX or redirect to Stripe checkout
+     */
     #[Route('/front/course/{id}/checkout', name: 'stripe_checkout_course', methods: ['POST'])]
     public function stripeCheckoutCourse(Course $course, Request $request): Response
     {
@@ -113,6 +148,13 @@ class FrontController extends AbstractController
         return new RedirectResponse($session->url);
     }
 
+    /**
+     * Display a lesson page.
+     *
+     * @param Lesson $lesson The lesson to display
+     * @param PurchaseRepository $purchaseRepository Repository to check purchases
+     * @return Response Rendered lesson template
+     */
     #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
     public function showLesson(Lesson $lesson, PurchaseRepository $purchaseRepository): Response
     {
@@ -133,18 +175,23 @@ class FrontController extends AbstractController
         ]);
     }
 
+    /**
+     * Display a course page.
+     *
+     * @param Course $course The course to display
+     * @param PurchaseRepository $purchaseRepository Repository to check purchases
+     * @return Response Rendered course template
+     */
     #[Route('/front/course/{id}', name: 'front_course_show')]
     public function showCourse(Course $course, PurchaseRepository $purchaseRepository): Response
     {
         $user = $this->getCurrentUser();
 
-        // Vérifie si l'utilisateur a acheté le cours
         $isCoursePurchased = $purchaseRepository->findOneBy([
             'user' => $user,
             'course' => $course
         ]) !== null;
 
-        // Crée un tableau avec les IDs des leçons déjà achetées par l'utilisateur pour ce cours
         $purchasedLessonIds = [];
         foreach ($user->getUserLessons() as $userLesson) {
             $lesson = $userLesson->getLesson();
@@ -153,7 +200,6 @@ class FrontController extends AbstractController
             }
         }
 
-        // Passe les variables au template
         return $this->render('front/lessons.html.twig', [
             'course' => $course,
             'isCoursePurchased' => $isCoursePurchased,
@@ -162,8 +208,11 @@ class FrontController extends AbstractController
         ]);
     }
 
-
-
+    /**
+     * Display all available themes.
+     *
+     * @return Response Rendered themes template
+     */
     #[Route('/front/themes', name: 'front_themes')]
     public function themes(): Response
     {
@@ -171,6 +220,11 @@ class FrontController extends AbstractController
         return $this->render('front/themes.html.twig', ['themes' => $themes]);
     }
 
+    /**
+     * List the current user's certifications.
+     *
+     * @return Response Rendered certifications template
+     */
     #[Route('/front/certifications', name: 'front_certifications')]
     public function listCertifications(): Response
     {
@@ -183,43 +237,40 @@ class FrontController extends AbstractController
         ]);
     }
 
+    /**
+     * Display all courses for a specific theme.
+     *
+     * @param int $themeId Theme ID
+     * @return Response Rendered theme courses template
+     */
     #[Route('/front/theme/{themeId}/courses', name: 'front_theme_courses')]
-    public function themeCourses(int $themeId, PurchaseRepository $purchaseRepository): Response
+    public function themeCourses(int $themeId): Response
     {
-        $user = $this->getCurrentUser();
         $theme = $this->themeService->getThemeWithCourses($themeId);
-
-        // Récupère les achats de l'utilisateur pour les cours de ce thème
-        $purchasedCourses = [];
-        foreach ($theme->getCourses() as $course) {
-            $purchase = $purchaseRepository->findOneBy([
-                'user' => $user,
-                'course' => $course
-            ]);
-            if ($purchase) {
-                $purchasedCourses[] = $course->getId();
-            }
-        }
 
         return $this->render('front/theme_courses.html.twig', [
             'theme' => $theme,
-            'purchasedCourses' => $purchasedCourses,
             'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
         ]);
     }
 
+    /**
+     * Display the lessons of a course, including purchased lessons.
+     *
+     * @param Course $course The course to display
+     * @param PurchaseRepository $purchaseRepository Repository to check purchases
+     * @return Response Rendered lessons template
+     */
     #[Route('/front/course/{id}/lessons', name: 'front_course_lessons')]
     public function showCourseLessons(Course $course, PurchaseRepository $purchaseRepository): Response
     {
         $user = $this->getCurrentUser();
 
-        // Vérifie si l'utilisateur a acheté le cours
         $isCoursePurchased = $purchaseRepository->findOneBy([
             'user' => $user,
             'course' => $course
         ]) !== null;
 
-        // Récupère uniquement les leçons achetées individuellement
         $purchasedLessonIds = [];
         foreach ($course->getLessons() as $lesson) {
             $purchase = $purchaseRepository->findOneBy([
@@ -234,13 +285,18 @@ class FrontController extends AbstractController
 
         return $this->render('front/lessons.html.twig', [
             'course' => $course,
-            'isCoursePurchased' => $isCoursePurchased, // <-- ajouté
+            'isCoursePurchased' => $isCoursePurchased,
             'purchasedLessonIds' => $purchasedLessonIds,
             'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
         ]);
     }
 
-
+    /**
+     * Validate a lesson for the current user.
+     *
+     * @param Lesson $lesson The lesson to validate
+     * @return Response Redirects to the lesson page
+     */
     #[Route('/front/lesson/{id}/validate', name: 'front_lesson_validate', methods: ['POST'])]
     public function validateLesson(Lesson $lesson): Response
     {
@@ -251,6 +307,11 @@ class FrontController extends AbstractController
         return $this->redirectToRoute('front_lesson_show', ['id' => $lesson->getId()]);
     }
 
+    /**
+     * Display the user's dashboard with accessible courses and lessons.
+     *
+     * @return Response Rendered dashboard template
+     */
     #[Route('/front/dashboard', name: 'front_dashboard')]
     public function dashboard(): Response
     {
@@ -262,7 +323,6 @@ class FrontController extends AbstractController
             foreach ($theme->getCourses() as $course) {
                 $hasAccess = $this->frontService->userHasAccessToCourse($user, $course);
 
-                // Ne garder que les cours que l'utilisateur a acheté
                 if (!$hasAccess) {
                     continue;
                 }

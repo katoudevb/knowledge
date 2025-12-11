@@ -14,11 +14,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+/**
+ * Controller handling Stripe checkout and success pages
+ * for lessons and courses.
+ */
 class StripeController extends AbstractController
 {
     public function __construct(private FrontService $frontService) {}
 
     // ------------------ CHECKOUT COURSE ------------------
+
+    /**
+     * Create a Stripe checkout session for a course purchase.
+     *
+     * @param Course $course The course to purchase
+     * @return JsonResponse JSON containing the session ID or error
+     */
     #[Route('/stripe/checkout/course/{id}', name: 'stripe_checkout_course', methods: ['POST'])]
     public function checkoutCourse(Course $course): JsonResponse
     {
@@ -53,11 +64,18 @@ class StripeController extends AbstractController
 
             return $this->json(['id' => $session->id]);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur de bande : ' . $e->getMessage()], 500);
+            return $this->json(['error' => 'Stripe error: ' . $e->getMessage()], 500);
         }
     }
 
     // ------------------ CHECKOUT LESSON ------------------
+
+    /**
+     * Create a Stripe checkout session for a lesson purchase.
+     *
+     * @param Lesson $lesson The lesson to purchase
+     * @return JsonResponse JSON containing the session ID or error
+     */
     #[Route('/stripe/checkout/lesson/{id}', name: 'stripe_checkout_lesson', methods: ['POST'])]
     public function checkoutLesson(Lesson $lesson): JsonResponse
     {
@@ -92,11 +110,19 @@ class StripeController extends AbstractController
 
             return $this->json(['id' => $session->id]);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur de bande : ' . $e->getMessage()], 500);
+            return $this->json(['error' => 'Stripe error: ' . $e->getMessage()], 500);
         }
     }
 
     // ------------------ SUCCESS COURSE ------------------
+
+    /**
+     * Handle successful course purchase.
+     * Simulates a sandbox purchase and redirects to the course page.
+     *
+     * @param Course $course The purchased course
+     * @return Response Redirects to the course page
+     */
     #[Route('/stripe/success/course/{id}', name: 'stripe_success_course')]
     public function successCourse(Course $course): Response
     {
@@ -111,6 +137,14 @@ class StripeController extends AbstractController
     }
 
     // ------------------ SUCCESS LESSON ------------------
+
+    /**
+     * Handle successful lesson purchase.
+     * Simulates a sandbox purchase and redirects to the lesson page.
+     *
+     * @param Lesson $lesson The purchased lesson
+     * @return Response Redirects to the lesson page
+     */
     #[Route('/stripe/success/lesson/{id}', name: 'stripe_success_lesson')]
     public function successLesson(Lesson $lesson): Response
     {
