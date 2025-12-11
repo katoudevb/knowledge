@@ -25,11 +25,13 @@
                 <td>{{ lesson.price }} €</td>
                 <td>
                     {% if lesson.content %}
-                        {# Affiche un résumé de 50 caractères #}
+                        {# Display a 50-character summary #}
                         {{ lesson.content|striptags|length > 50 ? lesson.content|striptags|slice(0, 50) ~ '...' : lesson.content|striptags }}
                     {% elseif lesson.videoUrl %}
+                        {# Link to view the video #}
                         <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}">Voir la vidéo</a>
                     {% else %}
+                        {# No content available #}
                         <p class="text-muted">Aucun contenu disponible.</p>
                     {% endif %}
                 </td>

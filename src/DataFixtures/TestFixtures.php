@@ -8,18 +8,21 @@ use App\Entity\Lesson;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
+/**
+ * Fixture to populate the database with test themes, courses, and lessons.
+ */
 class TestFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
         // -------------------------
-        // Thème : Musique
+        // Theme: Music
         // -------------------------
         $music = new Theme();
         $music->setName('Musique');
         $manager->persist($music);
 
-        // Cursus guitare
+        // Guitar course
         $guitarCourse = new Course();
         $guitarCourse->setTitle('Cursus d’initiation à la guitare')
                      ->setPrice(50)
@@ -40,7 +43,7 @@ class TestFixtures extends Fixture
                       ->setTheme($music);
         $manager->persist($lesson2Guitar);
 
-        // Cursus piano
+        // Piano course
         $pianoCourse = new Course();
         $pianoCourse->setTitle('Cursus d’initiation au piano')
                     ->setPrice(50)
@@ -62,7 +65,7 @@ class TestFixtures extends Fixture
         $manager->persist($lesson2Piano);
 
         // -------------------------
-        // Thème : Informatique
+        // Theme: IT
         // -------------------------
         $it = new Theme();
         $it->setName('Informatique');
@@ -89,7 +92,7 @@ class TestFixtures extends Fixture
         $manager->persist($lesson2Web);
 
         // -------------------------
-        // Thème : Jardinage
+        // Theme: Gardening
         // -------------------------
         $garden = new Theme();
         $garden->setName('Jardinage');
@@ -116,7 +119,7 @@ class TestFixtures extends Fixture
         $manager->persist($lesson2Garden);
 
         // -------------------------
-        // Thème : Cuisine
+        // Theme: Cooking
         // -------------------------
         $cooking = new Theme();
         $cooking->setName('Cuisine');
@@ -163,7 +166,7 @@ class TestFixtures extends Fixture
         $manager->persist($lesson2Dress);
 
         // -------------------------
-        // Enregistrement
+        // Persist all data to the database
         // -------------------------
         $manager->flush();
     }

@@ -11,7 +11,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-    {# --- Navbar simplifiée pour l'admin --- #}
+    {# --- Simplified navbar for admin --- #}
     <header class="bg-light shadow-sm">
         <nav class="navbar navbar-expand-lg navbar-light container-fluid">
             <a class="navbar-brand" href="{{ path('admin_dashboard') }}">
@@ -26,7 +26,7 @@
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav">
                     {% if app.user %}
-                        {# Déconnexion seulement pour l'admin #}
+                        {# Logout link for admin only #}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
                         </li>
@@ -39,7 +39,7 @@
         </nav>
     </header>
 
-    {# --- Main content --- #}
+    {# --- Main content area --- #}
     <main class="container-fluid my-4 flex-grow-1">
         {% block body %}{% endblock %}
     </main>

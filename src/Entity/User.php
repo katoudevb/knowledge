@@ -10,6 +10,10 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * Represents a user in the system.
+ * Handles authentication, roles, purchases, lessons, and certifications.
+ */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'An account with this email already exists')]
@@ -32,19 +36,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $isVerified = false;
 
-    // ---- Purchases (renamed) ----
+    /** @var Collection<int, Purchase> Purchases of the user */
     #[ORM\OneToMany(targetEntity: Purchase::class, mappedBy: 'user')]
     private Collection $purchases;
 
-    // ---- Certifications ----
+    /** @var Collection<int, Certification> Certifications obtained by the user */
     #[ORM\OneToMany(targetEntity: Certification::class, mappedBy: 'user', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $certifications;
 
-    // ---- User Lessons (renamed) ----
+    /** @var Collection<int, UserLesson> Lessons linked to the user */
     #[ORM\OneToMany(targetEntity: UserLesson::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $userLessons;
 
-    // Purchased Courses (unchanged)
+    /** @var Collection<int, Course> Courses purchased by the user */
     #[ORM\ManyToMany(targetEntity: Course::class)]
     #[ORM\JoinTable(name: "user_courses")]
     private Collection $purchasedCourses;
@@ -72,7 +76,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->purchasedCourses = new ArrayCollection();
     }
 
+    // -------------------------
     // BASIC FIELDS
+    // -------------------------
+
     public function getId(): ?int { return $this->id; }
     public function getEmail(): ?string { return $this->email; }
     public function setEmail(string $email): static { $this->email = $email; return $this; }
@@ -81,11 +88,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRoles(array $roles): static { $this->roles = $roles; return $this; }
     public function getPassword(): ?string { return $this->password; }
     public function setPassword(string $password): static { $this->password = $password; return $this; }
+
     #[\Deprecated] public function eraseCredentials(): void {}
+
     public function isVerified(): ?bool { return $this->isVerified; }
     public function setIsVerified(bool $isVerified): static { $this->isVerified = $isVerified; return $this; }
 
-    // ---- PURCHASES ----
+    // -------------------------
+    // PURCHASES
+    // -------------------------
+
+    /** @return Collection<int, Purchase> Get all purchases */
     public function getPurchases(): Collection { return $this->purchases; }
 
     public function addPurchase(Purchase $purchase): static
@@ -97,6 +110,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /** Remove a purchase */
     public function removePurchase(Purchase $purchase): static
     {
         if ($this->purchases->removeElement($purchase) && $purchase->getUser() === $this) {
@@ -105,7 +119,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // ---- CERTIFICATIONS ----
+    // -------------------------
+    // CERTIFICATIONS
+    // -------------------------
+
+    /** @return Collection<int, Certification> Get all certifications */
     public function getCertifications(): Collection { return $this->certifications; }
 
     public function addCertification(Certification $certification): static
@@ -125,12 +143,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getFrontCertifications(): Collection
-    {
-        return $this->getCertifications();
-    }
+    public function getFrontCertifications(): Collection { return $this->getCertifications(); }
 
-    // ---- USER LESSONS ----
+    // -------------------------
+    // USER LESSONS
+    // -------------------------
+
+    /** @return Collection<int, UserLesson> Get all user lessons */
     public function getUserLessons(): Collection { return $this->userLessons; }
 
     public function addUserLesson(UserLesson $lesson): static
@@ -150,7 +169,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // ---- PURCHASED COURSES ----
+    // -------------------------
+    // PURCHASED COURSES
+    // -------------------------
+
+    /** @return Collection<int, Course> Get purchased courses */
     public function getPurchasedCourses(): Collection { return $this->purchasedCourses; }
 
     public function addPurchasedCourse(Course $course): self
@@ -161,13 +184,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /** Remove a purchased course */
     public function removePurchasedCourse(Course $course): self
     {
         $this->purchasedCourses->removeElement($course);
         return $this;
     }
 
-    // ---- HELPERS ----
+    // -------------------------
+    // HELPERS
+    // -------------------------
+
+    /**
+     * Check if a lesson has been validated by the user.
+     *
+     * @param Lesson $lesson The lesson to check
+     * @return bool True if validated, false otherwise
+     */
     public function hasValidatedLesson(Lesson $lesson): bool
     {
         foreach ($this->userLessons as $userLesson) {
@@ -178,6 +211,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return false;
     }
 
+    /**
+     * Add a certification for a course if not already present.
+     *
+     * @param Course $course The course to add certification from
+     * @return static
+     */
     public function addCertificationFromCourse(Course $course): static
     {
         foreach ($this->certifications as $cert) {
@@ -193,7 +232,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // ---- AUDIT ----
+    // -------------------------
+    // AUDIT FIELDS
+    // -------------------------
+
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function setCreatedAt(\DateTimeImmutable $createdAt): static { $this->createdAt = $createdAt; return $this; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
