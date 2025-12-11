@@ -15,7 +15,7 @@ class UserControllerSecurityTest extends WebTestCase
         $client = static::createClient();
         $em = static::getContainer()->get('doctrine')->getManager();
 
-        // --- Créer et persister un admin ---
+        // --- Create and persist an admin ---
         $admin = new User();
         $admin->setEmail('admin@example.com')
               ->setPassword(password_hash('password', PASSWORD_BCRYPT))
@@ -27,7 +27,8 @@ class UserControllerSecurityTest extends WebTestCase
         $client->request('GET', '/admin/user');
         $this->assertResponseIsSuccessful();
 
-        // --- Créer et persister un utilisateur normal ---
+        
+        // --- Create and persist a normal user ---
         $user = new User();
         $user->setEmail('user@example.com')
              ->setPassword(password_hash('password', PASSWORD_BCRYPT))

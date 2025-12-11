@@ -39,7 +39,8 @@ class UserUnitTest extends TestCase
         $user = new User();
         $purchase = new Purchase();
 
-        // Utilisation des méthodes correctes
+        
+        // Using the correct methods    
         $user->addPurchase($purchase);
         $this->assertCount(1, $user->getPurchases());
         $this->assertSame($user, $purchase->getUser());

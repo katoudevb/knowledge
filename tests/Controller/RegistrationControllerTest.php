@@ -7,12 +7,27 @@ use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Tests\TestHelpers;
 
+/**
+ * Functional tests for the RegistrationController.
+ *
+ * Verifies:
+ * - User registration workflow
+ * - Database creation of a new user
+ * - Default verification status for newly registered users
+ */
 class RegistrationControllerTest extends WebTestCase
 {
     use TestHelpers;
 
+    /**
+     * @var UserRepository Repository to fetch User entities
+     */
     protected UserRepository $userRepository;
 
+    /**
+     * Initialize the test client, entity manager, and repositories.
+     * Purges related entities to ensure a clean database state before each test.
+     */
     protected function setUp(): void
     {
         $this->initTest();
@@ -26,12 +41,27 @@ class RegistrationControllerTest extends WebTestCase
         $this->em->flush();
     }
 
+    /**
+     * Generates a unique email address for testing purposes.
+     *
+     * @return string Unique email address
+     */
     private function generateUniqueEmail(): string
     {
         return 'user_' . uniqid('', true) . '@example.com';
     }
 
-        public function testRegister(): void
+    /**
+     * Tests the user registration process.
+     *
+     * Steps:
+     * - Access the registration form
+     * - Submit the form with a valid password
+     * - Assert redirection after submission
+     * - Verify that the user is created in the database
+     * - Verify that the user is not verified by default
+     */
+    public function testRegister(): void
     {
         $email = $this->generateUniqueEmail();
 
@@ -56,6 +86,4 @@ class RegistrationControllerTest extends WebTestCase
         self::assertNotNull($user, "L'utilisateur doit être créé en base");
         self::assertFalse($user->isVerified(), "L'utilisateur ne doit pas être vérifié par défaut");
     }
-
-
 }
