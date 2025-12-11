@@ -7,15 +7,17 @@ use App\Entity\Lesson;
 use App\Entity\Course;
 use App\Repository\LessonRepository;
 use App\Repository\CourseRepository;
+use App\Repository\PurchaseRepository;
 use App\Service\FrontService;
 use App\Service\ThemeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
+use Stripe\StripeClient;
 
-/**
- * FrontController for user actions.
- */
 class FrontController extends AbstractController
 {
     public function __construct(
@@ -29,7 +31,7 @@ class FrontController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            throw $this->createAccessDeniedException("L'/utilisateur doit être connecté");
+            throw $this->createAccessDeniedException("L'utilisateur doit être connecté.");
         }
         return $user;
     }
@@ -40,9 +42,8 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->simulateSandboxPurchase($user, $lesson);
 
-        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' a été acheté en mode bac à sable !");
-
-        return $this->redirectToRoute('front_dashboard');
+        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' achetée !");
+        return $this->redirectToRoute('front_lesson_show', ['id' => $lesson->getId()]);
     }
 
     #[Route('/front/course/{id}/purchase', name: 'front_course_purchase')]
@@ -51,43 +52,123 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->simulateSandboxPurchase($user, $course);
 
-        $this->addFlash('success', "Cours '{$course->getTitle()}' a été acheté en mode bac à sable !");
-
+        $this->addFlash('success', "Cours '{$course->getTitle()}' acheté !");
+        // Rediriger vers la page du cours après achat
         return $this->redirectToRoute('front_course_show', ['id' => $course->getId()]);
     }
 
+    #[Route('/front/lesson/{id}/checkout', name: 'stripe_checkout_lesson', methods: ['POST'])]
+    public function stripeCheckoutLesson(Lesson $lesson, Request $request): Response
+    {
+        $user = $this->getCurrentUser();
+        $stripe = new StripeClient($_ENV['STRIPE_SECRET_KEY']);
+
+        $session = $stripe->checkout->sessions->create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'eur',
+                    'product_data' => ['name' => $lesson->getTitle()],
+                    'unit_amount' => $lesson->getPrice() * 100,
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => $this->generateUrl('front_lesson_show', ['id' => $lesson->getId()], true),
+            'cancel_url' => $this->generateUrl('front_lesson_show', ['id' => $lesson->getId()], true),
+        ]);
+
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['id' => $session->id]);
+        }
+
+        return new RedirectResponse($session->url);
+    }
+
+    #[Route('/front/course/{id}/checkout', name: 'stripe_checkout_course', methods: ['POST'])]
+    public function stripeCheckoutCourse(Course $course, Request $request): Response
+    {
+        $user = $this->getCurrentUser();
+        $stripe = new StripeClient($_ENV['STRIPE_SECRET_KEY']);
+
+        $session = $stripe->checkout->sessions->create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'eur',
+                    'product_data' => ['name' => $course->getTitle()],
+                    'unit_amount' => $course->getPrice() * 100,
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => $this->generateUrl('front_course_show', ['id' => $course->getId()], true),
+            'cancel_url' => $this->generateUrl('front_theme_courses', ['themeId' => $course->getTheme()->getId()], true),
+        ]);
+
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse(['id' => $session->id]);
+        }
+
+        return new RedirectResponse($session->url);
+    }
+
     #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
-    public function showLesson(Lesson $lesson): Response
+    public function showLesson(Lesson $lesson, PurchaseRepository $purchaseRepository): Response
     {
         $user = $this->getCurrentUser();
         $hasAccess = $this->frontService->userHasAccessToLesson($user, $lesson);
 
+        $isCoursePurchased = $purchaseRepository->findOneBy([
+            'user' => $user,
+            'course' => $lesson->getCourse(),
+        ]) !== null;
+
         return $this->render('front/lessons.html.twig', [
             'lesson' => $lesson,
+            'course' => $lesson->getCourse(),
             'hasAccess' => $hasAccess,
             'hasValidated' => $user->hasValidatedLesson($lesson),
+            'isCoursePurchased' => $isCoursePurchased,
         ]);
     }
 
     #[Route('/front/course/{id}', name: 'front_course_show')]
-    public function showCourse(Course $course): Response
+    public function showCourse(Course $course, PurchaseRepository $purchaseRepository): Response
     {
         $user = $this->getCurrentUser();
-        $hasAccess = $this->frontService->userHasAccessToCourse($user, $course);
 
-        return $this->render('front/courses.html.twig', [
+        // Vérifie si l'utilisateur a acheté le cours
+        $isCoursePurchased = $purchaseRepository->findOneBy([
+            'user' => $user,
+            'course' => $course
+        ]) !== null;
+
+        // Crée un tableau avec les IDs des leçons déjà achetées par l'utilisateur pour ce cours
+        $purchasedLessonIds = [];
+        foreach ($user->getUserLessons() as $userLesson) {
+            $lesson = $userLesson->getLesson();
+            if ($lesson->getCourse() === $course) {
+                $purchasedLessonIds[] = $lesson->getId();
+            }
+        }
+
+        // Passe les variables au template
+        return $this->render('front/lessons.html.twig', [
             'course' => $course,
-            'hasAccess' => $hasAccess,
+            'isCoursePurchased' => $isCoursePurchased,
+            'purchasedLessonIds' => $purchasedLessonIds,
+            'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
         ]);
     }
+
+
 
     #[Route('/front/themes', name: 'front_themes')]
     public function themes(): Response
     {
-        $themes = $this->themeService->getAllThemes(); // récupère tous les thèmes
-        return $this->render('front/themes.html.twig', [
-            'themes' => $themes,
-        ]);
+        $themes = $this->themeService->getAllThemes();
+        return $this->render('front/themes.html.twig', ['themes' => $themes]);
     }
 
     #[Route('/front/certifications', name: 'front_certifications')]
@@ -103,14 +184,62 @@ class FrontController extends AbstractController
     }
 
     #[Route('/front/theme/{themeId}/courses', name: 'front_theme_courses')]
-    public function themeCourses(int $themeId): Response
+    public function themeCourses(int $themeId, PurchaseRepository $purchaseRepository): Response
     {
+        $user = $this->getCurrentUser();
         $theme = $this->themeService->getThemeWithCourses($themeId);
+
+        // Récupère les achats de l'utilisateur pour les cours de ce thème
+        $purchasedCourses = [];
+        foreach ($theme->getCourses() as $course) {
+            $purchase = $purchaseRepository->findOneBy([
+                'user' => $user,
+                'course' => $course
+            ]);
+            if ($purchase) {
+                $purchasedCourses[] = $course->getId();
+            }
+        }
 
         return $this->render('front/theme_courses.html.twig', [
             'theme' => $theme,
+            'purchasedCourses' => $purchasedCourses,
+            'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
         ]);
     }
+
+    #[Route('/front/course/{id}/lessons', name: 'front_course_lessons')]
+    public function showCourseLessons(Course $course, PurchaseRepository $purchaseRepository): Response
+    {
+        $user = $this->getCurrentUser();
+
+        // Vérifie si l'utilisateur a acheté le cours
+        $isCoursePurchased = $purchaseRepository->findOneBy([
+            'user' => $user,
+            'course' => $course
+        ]) !== null;
+
+        // Récupère uniquement les leçons achetées individuellement
+        $purchasedLessonIds = [];
+        foreach ($course->getLessons() as $lesson) {
+            $purchase = $purchaseRepository->findOneBy([
+                'user' => $user,
+                'lesson' => $lesson
+            ]);
+
+            if ($purchase) {
+                $purchasedLessonIds[] = $lesson->getId();
+            }
+        }
+
+        return $this->render('front/lessons.html.twig', [
+            'course' => $course,
+            'isCoursePurchased' => $isCoursePurchased, // <-- ajouté
+            'purchasedLessonIds' => $purchasedLessonIds,
+            'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
+        ]);
+    }
+
 
     #[Route('/front/lesson/{id}/validate', name: 'front_lesson_validate', methods: ['POST'])]
     public function validateLesson(Lesson $lesson): Response
@@ -118,25 +247,41 @@ class FrontController extends AbstractController
         $user = $this->getCurrentUser();
         $this->frontService->validateLesson($user, $lesson);
 
-        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' a été validée avec succès !");
-
-        return $this->redirectToRoute('front_dashboard');
+        $this->addFlash('success', "Leçon '{$lesson->getTitle()}' validée !");
+        return $this->redirectToRoute('front_lesson_show', ['id' => $lesson->getId()]);
     }
 
     #[Route('/front/dashboard', name: 'front_dashboard')]
     public function dashboard(): Response
     {
         $user = $this->getCurrentUser();
-
-        // Récupérer tous les thèmes
         $themes = $this->themeService->getAllThemes();
 
-        // Pour chaque thème, filtrer les cours accessibles à l'utilisateur
         foreach ($themes as $theme) {
-            $accessibleCourses = array_filter(
-                $theme->getCourses()->toArray(),
-                fn($course) => $this->frontService->userHasAccessToCourse($user, $course)
-            );
+            $accessibleCourses = [];
+            foreach ($theme->getCourses() as $course) {
+                $hasAccess = $this->frontService->userHasAccessToCourse($user, $course);
+
+                // Ne garder que les cours que l'utilisateur a acheté
+                if (!$hasAccess) {
+                    continue;
+                }
+
+                $lessons = [];
+                foreach ($course->getLessons() as $lesson) {
+                    $lessons[] = [
+                        'entity' => $lesson,
+                        'hasAccess' => $this->frontService->userHasAccessToLesson($user, $lesson),
+                    ];
+                }
+
+                $accessibleCourses[] = [
+                    'entity' => $course,
+                    'lessons' => $lessons,
+                    'hasAccess' => $hasAccess,
+                ];
+            }
+
             $theme->setAccessibleCourses($accessibleCourses);
         }
 
@@ -145,7 +290,4 @@ class FrontController extends AbstractController
             'themes' => $themes,
         ]);
     }
-
-
 }
-

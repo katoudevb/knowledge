@@ -1,7 +1,6 @@
-{% extends 'base.html.twig' %}
+{% extends 'back/base.html.twig' %}
 
 {% block title %}Liste des leçons{% endblock %}
-
 {% block page_title %}Gestion des leçons{% endblock %}
 
 {% block body %}
@@ -24,7 +23,16 @@
                 <td>{{ lesson.id }}</td>
                 <td>{{ lesson.title }}</td>
                 <td>{{ lesson.price }} €</td>
-                <td>{{ lesson.content ?: 'Aucun contenu' }}</td>
+                <td>
+                    {% if lesson.content %}
+                        {# Affiche un résumé de 50 caractères #}
+                        {{ lesson.content|striptags|length > 50 ? lesson.content|striptags|slice(0, 50) ~ '...' : lesson.content|striptags }}
+                    {% elseif lesson.videoUrl %}
+                        <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}">Voir la vidéo</a>
+                    {% else %}
+                        <p class="text-muted">Aucun contenu disponible.</p>
+                    {% endif %}
+                </td>
                 <td class="d-flex gap-2">
                     <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}" class="btn btn-primary btn-sm">Voir</a>
                     <a href="{{ path('admin_lesson_edit', {'id': lesson.id}) }}" class="btn btn-secondary btn-sm">Modifier</a>

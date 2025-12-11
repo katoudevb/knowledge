@@ -21,7 +21,8 @@
     {# --- Header --- #}
     <header class="bg-light shadow-sm">
         <nav class="navbar navbar-expand-lg navbar-light container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ path('app_home') }}">
+            <a class="navbar-brand d-flex align-items-center" 
+               href="{% if is_granted('ROLE_ADMIN') %}{{ path('admin_dashboard') }}{% else %}{{ path('app_home') }}{% endif %}">
                 <img src="{{ asset('images/knowledge.png') }}" alt="Logo" style="height: 50px;">
                 <span class="ms-2 fw-bold text-primary"></span>
             </a>
@@ -36,15 +37,24 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ path('app_home') }}">Accueil</a>
+                        <a class="nav-link" 
+                           href="{% if is_granted('ROLE_ADMIN') %}{{ path('admin_dashboard') }}{% else %}{{ path('app_home') }}{% endif %}">
+                            Accueil
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ path('front_themes') }}">Themes</a>
                     </li>
                     {% if app.user %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ path('front_certifications') }}">Mes Certifications</a>
-                        </li>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('admin_dashboard') }}">Dashboard Admin</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('front_certifications') }}">Mes Certifications</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
                         </li>

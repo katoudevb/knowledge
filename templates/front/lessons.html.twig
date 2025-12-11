@@ -1,45 +1,143 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Leçon: {{ lesson.title }}{% endblock %}
+{% block title %}
+    {% if lesson is defined %}
+        Leçon : {{ lesson.title }}
+    {% else %}
+        Cours : {{ course.title }}
+    {% endif %}
+{% endblock %}
 
 {% block body %}
 <div class="container my-5">
-    <div class="card shadow-sm rounded-3 p-4">
-        <h1 class="h4 text-primary mb-3">📘 Leçon : {{ lesson.title }}</h1>
 
-        <p><strong>Prix :</strong> {{ lesson.price }} €</p>
+    {% if lesson is defined %}
+        <div class="card shadow-sm rounded-3 mb-4 p-4">
+            <h1 class="h4 text-primary mb-3">📘 Leçon : {{ lesson.title }}</h1>
 
-        <!-- Lesson content -->
-        <div class="lesson-content mb-4">
-            <p>{{ lesson.content ?: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur euismod, nisl vel tincidunt facilisis, neque quam laoreet purus, a fermentum nulla erat id ex.' }}</p>
-        </div>
-
-        <!-- Embedded video if available -->
-        {% if lesson.videoUrl %}
-            <div class="mb-4 ratio ratio-16x9">
-                <iframe src="{{ lesson.videoUrl }}" frameborder="0" allowfullscreen></iframe>
-            </div>
-        {% endif %}
-
-        <!-- Validation button or indicator -->
-        <div class="mb-4">
-            {% if hasValidated %}
-                <p class="text-success fw-bold">✅ Cette leçon est validée</p>
+            {% if lesson.content %}
+                <section class="mt-3">
+                    <h3>Contenu :</h3>
+                    <div>{{ lesson.content|raw }}</div>
+                </section>
             {% else %}
-                <form action="{{ path('front_lesson_validate', {'id': lesson.id}) }}" method="post" style="display:inline;">
+                <p class="text-muted mt-3">Aucun contenu disponible pour cette leçon.</p>
+            {% endif %}
+
+            <section class="mt-4">
+                <h3>Vidéo :</h3>
+                {% if lesson.videoUrl %}
+                    {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
+                    {% set embedUrl = cleanUrl
+                        | replace({'https://www.youtube.com/watch?v=': 'https://www.youtube.com/embed/'})
+                        | replace({'https://youtu.be/': 'https://www.youtube.com/embed/'}) %}
+                    <div class="ratio ratio-16x9 mt-2">
+                        <iframe src="{{ embedUrl }}" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune vidéo disponible pour cette leçon.</p>
+                {% endif %}
+            </section>
+
+            {% if hasValidated %}
+                <p class="text-success fw-bold mt-3">✅ Cette leçon est validée</p>
+            {% else %}
+                <form action="{{ path('front_lesson_validate', {'id': lesson.id}) }}" method="POST" class="mt-3">
                     <button type="submit" class="btn btn-success">Valider la leçon</button>
                 </form>
             {% endif %}
+
+            <a href="{{ path('front_course_lessons', {'id': course.id}) }}" class="btn btn-secondary mt-4">← Retour aux leçons</a>
         </div>
 
-        <!-- Link back to parent course -->
+    {% else %}
+        <div class="card shadow-sm rounded-3 mb-4 p-4">
+            <h1 class="h4 text-primary mb-3">📖 Cours : {{ course.title }}</h1>
+            {% if course.description %}
+                <div>{{ course.description|raw }}</div>
+            {% endif %}
+        </div>
 
-        {% if lesson.course.theme %}
-            <a href="{{ path('front_theme_courses', {'themeId': lesson.course.theme.id}) }}" class="btn btn-secondary">← Retour au thème</a>
-        {% else %}
-            <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
-        {% endif %}
+        <h2 class="mb-3">Leçons disponibles :</h2>
+        <div class="row g-3 mb-4">
+            {% for lesson in course.lessons %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title">{{ lesson.title }}</h5>
+                            
+                            {% if lesson.content %}
+                                <div class="card-text lesson-content">{{ lesson.content|raw }}</div>
+                            {% endif %}
 
-    </div>
+                            {% if lesson.videoUrl %}
+                                <h6 class="mt-3">Vidéo :</h6>
+                                {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
+                                {% set embedUrl = cleanUrl
+                                    | replace({'https://www.youtube.com/watch?v=': 'https://www.youtube.com/embed/'})
+                                    | replace({'https://youtu.be/': 'https://www.youtube.com/embed/'}) %}
+                                <div class="ratio ratio-16x9">
+                                    <iframe src="{{ embedUrl }}" frameborder="0" allowfullscreen></iframe>
+                                </div>
+                            {% endif %}
+
+                            {# --- Gestion des boutons --- #}
+                            {% if isCoursePurchased %}
+                                {% if lesson.id in purchasedLessonIds %}
+                                    <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">
+                                        Consulter la leçon
+                                    </a>
+                                {% else %}
+                                    <form class="stripe-checkout-lesson" action="{{ path('stripe_checkout_lesson', {'id': lesson.id}) }}" method="POST">
+                                        <button type="submit" class="btn btn-primary w-100 mt-3">
+                                            Acheter la leçon - {{ lesson.price }} €
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <button class="btn btn-secondary w-100 mt-3" disabled>
+                                    Acheter leçon (Cours non acheté)
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ path('front_dashboard') }}" class="btn btn-secondary">
+                ← Retour au dashboard
+            </a>
+        </div>
+    {% endif %}
+
 </div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe("{{ stripePublicKey|default('') }}");
+
+document.querySelectorAll('.stripe-checkout-lesson').forEach(form => {
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.id) {
+                stripe.redirectToCheckout({ sessionId: data.id });
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erreur lors de la création de la session Stripe.");
+        });
+    });
+});
+</script>
 {% endblock %}

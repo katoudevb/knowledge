@@ -1,7 +1,6 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Détails du cours{% endblock %}
-
 {% block page_title %}Détails du cours{% endblock %}
 
 {% block body %}
@@ -24,6 +23,38 @@
             </tr>
         </tbody>
     </table>
+
+    <h3 class="mt-4">Leçons disponibles :</h3>
+    <div class="row g-3 mb-4">
+        {% for lesson in course.lessons %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <h5 class="card-title">{{ lesson.title }}</h5>
+                        {% if lesson.content %}
+                            <p class="card-text">{{ lesson.content|length > 100 ? lesson.content|slice(0, 100) ~ '...' : lesson.content }}</p>
+                        {% endif %}
+
+                        {% if lesson.videoUrl %}
+                            <h6 class="mt-3">Vidéo :</h6>
+                            {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
+                            {% set embedUrl = cleanUrl
+                                | replace({'https://www.youtube.com/watch?v=': 'https://www.youtube.com/embed/'})
+                                | replace({'https://youtu.be/': 'https://www.youtube.com/embed/'}) %}
+                            <div class="ratio ratio-16x9">
+                                <iframe src="{{ embedUrl }}" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        {% endif %}
+
+                        {# Bouton pour consulter la leçon (back-office uniquement) #}
+                        <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">
+                            Consulter la leçon
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 
     <div class="mt-3 d-flex gap-2">
         <a href="{{ path('admin_course_index') }}" class="btn btn-secondary">← Retour à la liste</a>
