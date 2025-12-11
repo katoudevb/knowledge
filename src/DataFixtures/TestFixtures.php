@@ -8,174 +8,162 @@ use App\Entity\Lesson;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
-/**
- * Test fixtures for the Knowledge application.
- *
- * Creates themes, courses, and lessons with prices and relationships
- * between entities to populate the database with realistic data.
- */
 class TestFixtures extends Fixture
 {
-    /**
-     * Loads data into the database.
-     *
-     * @param ObjectManager $manager Doctrine entity manager
-     * @return void
-     */
     public function load(ObjectManager $manager): void
     {
         // -------------------------
-        // Theme: Music
+        // Thème : Musique
         // -------------------------
         $music = new Theme();
-        $music->setName('Music');
+        $music->setName('Musique');
         $manager->persist($music);
 
-        // Guitar course
+        // Cursus guitare
         $guitarCourse = new Course();
-        $guitarCourse->setTitle('Introduction to Guitar')
+        $guitarCourse->setTitle('Cursus d’initiation à la guitare')
                      ->setPrice(50)
                      ->setTheme($music);
         $manager->persist($guitarCourse);
 
         $lesson1Guitar = new Lesson();
-        $lesson1Guitar->setTitle('Discovering the Instrument')
+        $lesson1Guitar->setTitle('Leçon n°1 : Découverte de l’instrument')
                       ->setPrice(26)
                       ->setCourse($guitarCourse)
-                      ->setTheme($guitarCourse->getTheme());
+                      ->setTheme($music);
         $manager->persist($lesson1Guitar);
 
         $lesson2Guitar = new Lesson();
-        $lesson2Guitar->setTitle('Chords and Scales')
+        $lesson2Guitar->setTitle('Leçon n°2 : Les accords et les gammes')
                       ->setPrice(26)
                       ->setCourse($guitarCourse)
-                      ->setTheme($guitarCourse->getTheme());
+                      ->setTheme($music);
         $manager->persist($lesson2Guitar);
 
-        // Piano course
+        // Cursus piano
         $pianoCourse = new Course();
-        $pianoCourse->setTitle('Introduction to Piano')
+        $pianoCourse->setTitle('Cursus d’initiation au piano')
                     ->setPrice(50)
                     ->setTheme($music);
         $manager->persist($pianoCourse);
 
         $lesson1Piano = new Lesson();
-        $lesson1Piano->setTitle('Discovering the Instrument')
+        $lesson1Piano->setTitle('Leçon n°1 : Découverte de l’instrument')
                      ->setPrice(26)
                      ->setCourse($pianoCourse)
-                     ->setTheme($pianoCourse->getTheme());
+                     ->setTheme($music);
         $manager->persist($lesson1Piano);
 
         $lesson2Piano = new Lesson();
-        $lesson2Piano->setTitle('Chords and Scales')
+        $lesson2Piano->setTitle('Leçon n°2 : Les accords et les gammes')
                      ->setPrice(26)
                      ->setCourse($pianoCourse)
-                     ->setTheme($pianoCourse->getTheme());
+                     ->setTheme($music);
         $manager->persist($lesson2Piano);
 
         // -------------------------
-        // Theme: IT
+        // Thème : Informatique
         // -------------------------
         $it = new Theme();
-        $it->setName('IT');
+        $it->setName('Informatique');
         $manager->persist($it);
 
         $webDev = new Course();
-        $webDev->setTitle('Introduction to Web Development')
+        $webDev->setTitle('Cursus d’initiation au développement web')
                ->setPrice(60)
                ->setTheme($it);
         $manager->persist($webDev);
 
         $lesson1Web = new Lesson();
-        $lesson1Web->setTitle('HTML and CSS Basics')
+        $lesson1Web->setTitle('Leçon n°1 : Les langages HTML et CSS')
                    ->setPrice(32)
                    ->setCourse($webDev)
-                   ->setTheme($webDev->getTheme());
+                   ->setTheme($it);
         $manager->persist($lesson1Web);
 
         $lesson2Web = new Lesson();
-        $lesson2Web->setTitle('Bring Your Website to Life with JavaScript')
+        $lesson2Web->setTitle('Leçon n°2 : Dynamiser votre site avec JavaScript')
                    ->setPrice(32)
                    ->setCourse($webDev)
-                   ->setTheme($webDev->getTheme());
+                   ->setTheme($it);
         $manager->persist($lesson2Web);
 
         // -------------------------
-        // Theme: Gardening
+        // Thème : Jardinage
         // -------------------------
         $garden = new Theme();
-        $garden->setName('Gardening');
+        $garden->setName('Jardinage');
         $manager->persist($garden);
 
         $gardenCourse = new Course();
-        $gardenCourse->setTitle('Introduction to Gardening')
+        $gardenCourse->setTitle('Cursus d’initiation au jardinage')
                      ->setPrice(30)
                      ->setTheme($garden);
         $manager->persist($gardenCourse);
 
         $lesson1Garden = new Lesson();
-        $lesson1Garden->setTitle('Gardening Tools')
+        $lesson1Garden->setTitle('Leçon n°1 : Les outils du jardinier')
                       ->setPrice(16)
                       ->setCourse($gardenCourse)
-                      ->setTheme($gardenCourse->getTheme());
+                      ->setTheme($garden);
         $manager->persist($lesson1Garden);
 
         $lesson2Garden = new Lesson();
-        $lesson2Garden->setTitle('Gardening by the Moon')
+        $lesson2Garden->setTitle('Leçon n°2 : Jardiner avec la lune')
                       ->setPrice(16)
                       ->setCourse($gardenCourse)
-                      ->setTheme($gardenCourse->getTheme());
+                      ->setTheme($garden);
         $manager->persist($lesson2Garden);
 
         // -------------------------
-        // Theme: Cooking
+        // Thème : Cuisine
         // -------------------------
         $cooking = new Theme();
-        $cooking->setName('Cooking');
+        $cooking->setName('Cuisine');
         $manager->persist($cooking);
 
         $cookingCourse1 = new Course();
-        $cookingCourse1->setTitle('Introduction to Cooking')
+        $cookingCourse1->setTitle('Cursus d’initiation à la cuisine')
                        ->setPrice(44)
                        ->setTheme($cooking);
         $manager->persist($cookingCourse1);
 
         $lesson1Cook = new Lesson();
-        $lesson1Cook->setTitle('Cooking Methods')
+        $lesson1Cook->setTitle('Leçon n°1 : Les modes de cuisson')
                     ->setPrice(23)
                     ->setCourse($cookingCourse1)
-                    ->setTheme($cookingCourse1->getTheme());
+                    ->setTheme($cooking);
         $manager->persist($lesson1Cook);
 
         $lesson2Cook = new Lesson();
-        $lesson2Cook->setTitle('Flavors')
+        $lesson2Cook->setTitle('Leçon n°2 : Les saveurs')
                     ->setPrice(23)
                     ->setCourse($cookingCourse1)
-                    ->setTheme($cookingCourse1->getTheme());
+                    ->setTheme($cooking);
         $manager->persist($lesson2Cook);
 
         $cookingCourse2 = new Course();
-        $cookingCourse2->setTitle('Introduction to Culinary Plating')
+        $cookingCourse2->setTitle('Cursus d’initiation à l’art du dressage culinaire')
                        ->setPrice(48)
                        ->setTheme($cooking);
         $manager->persist($cookingCourse2);
 
         $lesson1Dress = new Lesson();
-        $lesson1Dress->setTitle('Plating Techniques')
+        $lesson1Dress->setTitle('Leçon n°1 : Mettre en œuvre le style dans l’assiette')
                      ->setPrice(26)
                      ->setCourse($cookingCourse2)
-                     ->setTheme($cookingCourse2->getTheme());
+                     ->setTheme($cooking);
         $manager->persist($lesson1Dress);
 
         $lesson2Dress = new Lesson();
-        $lesson2Dress->setTitle('Harmonizing a Four-Course Meal')
+        $lesson2Dress->setTitle('Leçon n°2 : Harmoniser un repas à quatre plats')
                      ->setPrice(26)
                      ->setCourse($cookingCourse2)
-                     ->setTheme($cookingCourse2->getTheme());
+                     ->setTheme($cooking);
         $manager->persist($lesson2Dress);
 
         // -------------------------
-        // Flush all entities
+        // Enregistrement
         // -------------------------
         $manager->flush();
     }

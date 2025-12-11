@@ -14,18 +14,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/admin/theme', name: 'admin_theme_')]
 #[IsGranted('ROLE_ADMIN')]
 /**
- * Administration controller for managing themes.
+ * Admin controller for managing themes.
  *
- * This controller allows administrators (ROLE_ADMIN) to perform CRUD operations
- * on Theme entities: list, create, read, update, and delete.
+ * Allows administrators to perform CRUD operations on Theme entities.
  */
 final class ThemeController extends AbstractController
 {
     /**
      * Lists all themes.
      *
-     * @param ThemeService $themeService Service to access Theme entities
-     * @return Response HTTP response rendering the list of themes
+     * @param ThemeService $themeService
+     * @return Response
      */
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(ThemeService $themeService): Response
@@ -38,12 +37,9 @@ final class ThemeController extends AbstractController
     /**
      * Creates a new theme.
      *
-     * Displays a creation form and, if submitted and valid,
-     * persists the entity to the database.
-     *
-     * @param Request $request HTTP request containing form data
-     * @param ThemeService $themeService Service handling persistence
-     * @return Response HTTP response rendering the form or redirecting to the index
+     * @param Request $request
+     * @param ThemeService $themeService
+     * @return Response
      */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, ThemeService $themeService): Response
@@ -54,7 +50,6 @@ final class ThemeController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $themeService->saveTheme($theme);
-
             return $this->redirectToRoute('admin_theme_index', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -65,10 +60,10 @@ final class ThemeController extends AbstractController
     }
 
     /**
-     * Shows details of a theme.
+     * Shows a theme.
      *
-     * @param Theme $theme Theme entity automatically injected
-     * @return Response HTTP response rendering theme details
+     * @param Theme $theme
+     * @return Response
      */
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(Theme $theme): Response
@@ -81,13 +76,10 @@ final class ThemeController extends AbstractController
     /**
      * Edits an existing theme.
      *
-     * Displays an edit form and, if submitted and valid,
-     * updates the entity in the database.
-     *
-     * @param Request $request HTTP request containing form data
-     * @param Theme $theme Theme entity to edit
-     * @param ThemeService $themeService Service handling persistence
-     * @return Response HTTP response rendering the form or redirecting to the index
+     * @param Request $request
+     * @param Theme $theme
+     * @param ThemeService $themeService
+     * @return Response
      */
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Theme $theme, ThemeService $themeService): Response
@@ -97,7 +89,6 @@ final class ThemeController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $themeService->saveTheme($theme);
-
             return $this->redirectToRoute('admin_theme_index', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -110,13 +101,10 @@ final class ThemeController extends AbstractController
     /**
      * Deletes a theme.
      *
-     * Checks CSRF token validity before removing the entity
-     * from the database.
-     *
-     * @param Request $request HTTP request containing the CSRF token
-     * @param Theme $theme Theme entity to delete
-     * @param ThemeService $themeService Service handling deletion
-     * @return Response HTTP response redirecting to the index after deletion
+     * @param Request $request
+     * @param Theme $theme
+     * @param ThemeService $themeService
+     * @return Response
      */
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, Theme $theme, ThemeService $themeService): Response
@@ -126,5 +114,22 @@ final class ThemeController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_theme_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * Lists all courses of a theme in the back-office.
+     *
+     * @param Theme $theme
+     * @return Response
+     */
+    #[Route('/{id}/courses', name: 'courses', methods: ['GET'])]
+    public function courses(Theme $theme): Response
+    {
+        $courses = $theme->getCourses();
+
+        return $this->render('back/theme/courses.html.twig', [
+            'theme' => $theme,
+            'courses' => $courses,
+        ]);
     }
 }

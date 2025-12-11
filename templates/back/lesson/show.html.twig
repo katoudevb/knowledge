@@ -23,8 +23,29 @@
                 <td>{{ lesson.price }} €</td>
             </tr>
             <tr>
-                <th>Contenu</th>
-                <td>{{ lesson.content ?: 'Aucun contenu disponible.' }}</td>
+                <th>Description</th>
+                <td>
+                    {% if lesson.content %}
+                        {{ lesson.content|raw }}
+                    {% else %}
+                        <p class="text-muted">Aucun contenu disponible.</p>
+                    {% endif %}
+
+                    {% if lesson.videoUrl %}
+                        <h3 class="mt-3">Vidéo :</h3>
+                        {% if lesson.videoUrl ends with '.mp4' %}
+                            <video width="400" controls class="mt-2">
+                                <source src="{{ lesson.videoUrl }}" type="video/mp4">
+                                Votre navigateur ne supporte pas la lecture de vidéo.
+                            </video>
+                        {% else %}
+                            {% set youtube_id = lesson.videoUrl | replace({'https://www.youtube.com/watch?v=': ''}) %}
+                            <iframe width="400" height="225" class="mt-2"
+                                    src="https://www.youtube.com/embed/{{ youtube_id }}"
+                                    frameborder="0" allowfullscreen></iframe>
+                        {% endif %}
+                    {% endif %}
+                </td>
             </tr>
         </tbody>
     </table>

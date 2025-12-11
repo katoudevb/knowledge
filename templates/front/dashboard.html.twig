@@ -6,36 +6,40 @@
 <div class="container my-5">
     <h1 class="text-primary text-center mb-4">📚 Dashboard de {{ user.email }}</h1>
 
+    {% set hasPurchasedCourses = false %}
+
     {% if themes is defined and themes|length > 0 %}
         {% for theme in themes %}
             {% set accessibleCourses = theme.accessibleCourses|default([]) %}
-
-            {% if accessibleCourses|length > 0 %}
+            
+            {% set purchasedCourses = accessibleCourses|filter(c => c.hasAccess) %}
+            
+            {% if purchasedCourses|length > 0 %}
+                {% set hasPurchasedCourses = true %}
                 <h2 class="mt-4">{{ theme.name }}</h2>
                 <div class="row g-3">
-                    {% for course in accessibleCourses %}
+                    {% for courseWrapper in purchasedCourses %}
+                        {% set course = courseWrapper.entity %}
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-body d-flex flex-column justify-content-between">
                                     <h5 class="card-title">{{ course.title }}</h5>
                                     <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
-                                    <a href="{{ path('front_course_purchase', {'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
-                                        Acheter le cours
+                                    <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mt-3">
+                                        Voir les leçons
                                     </a>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <div class="alert alert-info text-center mt-2">
-                    Aucun cours disponible pour le thème "{{ theme.name }}".
-                </div>
             {% endif %}
         {% endfor %}
-    {% else %}
-        <div class="alert alert-info text-center">
-            Aucun thème disponible pour le moment.
+    {% endif %}
+
+    {% if not hasPurchasedCourses %}
+        <div class="alert alert-info text-center mt-2">
+            Vous n'avez encore acheté aucun cours.
         </div>
     {% endif %}
 

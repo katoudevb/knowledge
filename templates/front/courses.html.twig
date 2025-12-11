@@ -1,43 +1,81 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Cours: {{ course.title }}{% endblock %}
+{% block title %}Cours : {{ course.title }}{% endblock %}
 
 {% block body %}
 <div class="container my-5">
-
     <div class="card shadow-sm rounded-3 mb-4 p-4">
         <h1 class="h4 text-primary mb-3">📖 Cours : {{ course.title }}</h1>
-        <p>{{ course.description }}</p>
-       <a href="{{ path('front_course_purchase', {'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
-            Acheter le cours
-        </a>
+        <p>{{ course.description|raw }}</p>
     </div>
 
-    <h2 class="mb-3">Leçons</h2>
-    {% if course.lessons|length > 0 %}
-        <div class="row g-3 mb-4">
-            {% for lesson in course.lessons %}
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column justify-content-between">
-                            <h5 class="card-title">{{ lesson.title }}</h5>
-                            <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-secondary mt-3 w-100">
-                                Voir la leçon
+    <h2 class="mb-3">Leçons disponibles :</h2>
+    <div class="row g-3">
+        {% for lesson in course.lessons %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <h5 class="card-title">{{ lesson.title }}</h5>
+
+                        {# Contenu de la leçon #}
+                        {% if lesson.content %}
+                            <div class="card-text lesson-content">{{ lesson.content|raw }}</div>
+                        {% endif %}
+
+                        {# Bouton acheter / consulter côté front #}
+                        {% if lesson.id in purchasedLessonIds %}
+                            <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mt-3">
+                                Consulter la leçon
                             </a>
-                        </div>
+                        {% else %}
+                            <form class="stripe-checkout-lesson" 
+                                  action="{{ path('stripe_checkout_lesson', {'id': lesson.id}) }}" 
+                                  method="POST">
+                                <button type="submit" class="btn btn-primary w-100 mt-3">
+                                    Acheter la leçon - {{ lesson.price }} €
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info text-center">
-            Aucune leçon disponible.
-        </div>
-    {% endif %}
+            </div>
+        {% else %}
+            <div class="col-12 text-center">
+                <p>Aucune leçon disponible pour ce cours.</p>
+            </div>
+        {% endfor %}
+    </div>
 
-    <section>
-        <h3>Description :</h3>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-    </section>
+    <div class="text-center mt-4">
+        <a href="{{ path('front_dashboard') }}" class="btn btn-secondary">← Retour au dashboard</a>
+    </div>
 </div>
+
+{# SCRIPT STRIPE — IDENTIQUE À CELUI DU FICHIER COURS #}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe("{{ stripePublicKey|default('') }}");
+
+document.querySelectorAll('.stripe-checkout-lesson').forEach(form => {
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.id) {
+                stripe.redirectToCheckout({ sessionId: data.id });
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erreur lors de la création de la session Stripe.");
+        });
+    });
+});
+</script>
 {% endblock %}

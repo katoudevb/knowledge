@@ -10,13 +10,20 @@
         <div class="row g-3">
             {% for course in theme.courses %}
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 shadow-sm mb-3">
                         <div class="card-body d-flex flex-column justify-content-between">
                             <h5 class="card-title">{{ course.title }}</h5>
-                            <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
-                            <a href="{{ path('front_course_purchase', {'id': course.id}) }}" class="btn btn-primary w-100 mt-3">
-                                Acheter le cours
-                            </a>
+                            <p class="card-text"><strong>Prix du cours :</strong> {{ course.price }} €</p>
+
+                            {% if course.id in purchasedCourses %}
+                                <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mb-2">
+                                    Consulter le cours
+                                </a>
+                            {% else %}
+                                <form class="stripe-checkout-course" action="{{ path('stripe_checkout_course', {'id': course.id}) }}" method="POST">
+                                    <button type="submit" class="btn btn-primary w-100 mb-2">Acheter le cours</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -32,4 +39,31 @@
         <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
     </div>
 </div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe("{{ stripePublicKey }}");
+
+document.querySelectorAll('.stripe-checkout-course').forEach(form => {
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.id) {
+                stripe.redirectToCheckout({ sessionId: data.id });
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Erreur lors de la création de la session Stripe.");
+        });
+    });
+});
+</script>
 {% endblock %}

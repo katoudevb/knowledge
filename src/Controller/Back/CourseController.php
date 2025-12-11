@@ -62,7 +62,9 @@ final class CourseController extends AbstractController
     }
 
     /**
-     * Shows a course details.
+     * Shows course details.
+     *
+     * No purchase logic is checked in the back office.
      *
      * @param Course $course
      * @return Response
@@ -70,7 +72,9 @@ final class CourseController extends AbstractController
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(Course $course): Response
     {
-        return $this->render('back/course/show.html.twig', compact('course'));
+        return $this->render('back/course/show.html.twig', [
+            'course' => $course,
+        ]);
     }
 
     /**

@@ -31,7 +31,7 @@ class FrontService
     }
 
     /**
-     * Check if a user has access to a lesson via purchase or course purchase.
+     * Check if a user has access to a lesson via purchase.
      */
     public function userHasAccessToLesson(User $user, Lesson $lesson): bool
     {
@@ -39,10 +39,8 @@ class FrontService
             if ($purchase->getUser() === $user) return true;
         }
 
-        if ($this->userHasAccessToCourse($user, $lesson->getCourse())) {
-            return true;
-        }
-
+        // Retirer l'accès automatique si le cours est acheté
+        // L'accès à la leçon est uniquement si l'utilisateur a acheté la leçon
         foreach ($user->getUserLessons() as $userLesson) {
             if ($userLesson->getLesson() === $lesson) return true;
         }
@@ -58,7 +56,6 @@ class FrontService
     {
         $purchase = new Purchase();
         $purchase->sandboxPurchase($user, $item); // link user and item
-
         $this->em->persist($purchase);
 
         if ($item instanceof Course) {
@@ -66,16 +63,7 @@ class FrontService
             $user->addPurchasedCourse($item);
             $this->em->persist($user);
 
-            // Grant access to all lessons in the course
-            foreach ($item->getLessons() as $lesson) {
-                $userLesson = $this->em->getRepository(UserLesson::class)
-                                       ->findOneBy(['user' => $user, 'lesson' => $lesson]);
-                if (!$userLesson) {
-                    $userLesson = new UserLesson();
-                    $userLesson->setUser($user)->setLesson($lesson);
-                    $this->em->persist($userLesson);
-                }
-            }
+            // ❌ Ne PAS donner automatiquement accès aux leçons
         } elseif ($item instanceof Lesson) {
             // Grant access to single lesson
             $userLesson = $this->em->getRepository(UserLesson::class)
