@@ -37,10 +37,10 @@ class LessonAndCertificationTest extends WebTestCase
         // Simulate lesson purchase
         $this->purchaseLesson($user, $lesson, 50);
 
-        // Call the correct purchase route
-        $this->client->request('GET', '/front/lesson/'.$lesson->getId().'/purchase');
+        // Call the correct purchase route (if purchase is via POST)
+        $this->client->request('POST', '/front/lesson/'.$lesson->getId().'/purchase');
 
-        // Check redirection to the lesson page (not dashboard)
+        // Check redirection to the lesson page
         $this->assertResponseRedirects('/front/lesson/'.$lesson->getId());
 
         // Verify that the purchase is recorded
@@ -70,10 +70,10 @@ class LessonAndCertificationTest extends WebTestCase
             'Test Course'    // course title
         );
 
-        // POST to the validation route
-        $this->client->request('POST', '/front/lesson/'.$lesson->getId().'/validate');
+        // POST to the correct validation route
+        $this->client->request('POST', '/validate-lesson/'.$lesson->getId());
 
-        // Check redirection to the lesson page (updated from dashboard)
+        // Check redirection to the lesson page
         $this->assertResponseRedirects('/front/lesson/'.$lesson->getId());
 
         // Verify that UserLesson is created and validated
