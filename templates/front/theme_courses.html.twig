@@ -6,6 +6,9 @@
 <div class="container my-5">
     <h1 class="text-primary text-center mb-4">📚 Cours pour le thème : {{ theme.name }}</h1>
 
+    {% set purchasedLessonIdsByCourse = purchasedLessonIdsByCourse|default({}) %}
+    {% set purchasedCourses = purchasedCourses|default([]) %}
+
     {% if theme.courses|length > 0 %}
         <div class="row g-3">
             {% for course in theme.courses %}
@@ -15,13 +18,39 @@
                             <h5 class="card-title">{{ course.title }}</h5>
                             <p class="card-text"><strong>Prix du cours :</strong> {{ course.price }} €</p>
 
-                            {% if course.id in purchasedCourses %}
-                                <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mb-2">
-                                    Consulter le cours
-                                </a>
-                            {% else %}
-                                <form class="stripe-checkout-course" action="{{ path('stripe_checkout_course', {'id': course.id}) }}" method="POST">
-                                    <button type="submit" class="btn btn-primary w-100 mb-2">Acheter le cours</button>
+                            {% set purchasedLessonIds = purchasedLessonIdsByCourse[course.id]|default([]) %}
+                            {% set coursePurchased = course.id in purchasedCourses %}
+                            {% set allLessonsPurchased = course.lessons|length > 0 and course.lessons|length == purchasedLessonIds|length %}
+
+                            {# Affiche les leçons avec les boutons appropriés #}
+                            {% for lesson in course.lessons %}
+                                {% set hasLessonAccess = lesson.id in purchasedLessonIds %}
+                                <div class="mb-2">
+                                    {% if hasLessonAccess or coursePurchased %}
+                                        <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mb-1">
+                                            Consulter la leçon {{ lesson.title }}
+                                        </a>
+                                    {% else %}
+                                        <strong>{{ lesson.title }}</strong>
+                                        <form class="stripe-form mt-1"
+                                              action="{{ path('stripe_checkout_lesson', {'id': lesson.id}) }}"
+                                              method="POST" data-turbo="false">
+                                            <button type="button" class="btn btn-primary w-100">
+                                                Acheter la leçon - {{ lesson.price }} €
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+
+                            {# Affiche le bouton pour acheter le cours complet uniquement si le cours n'est pas acheté et toutes les leçons ne sont pas achetées #}
+                            {% if not coursePurchased and not allLessonsPurchased %}
+                                <form class="stripe-form mt-2"
+                                      action="{{ path('stripe_checkout_course', {'id': course.id}) }}"
+                                      method="POST" data-turbo="false">
+                                    <button type="button" class="btn btn-secondary w-100">
+                                        Acheter le cours complet - {{ course.price }} €
+                                    </button>
                                 </form>
                             {% endif %}
                         </div>
@@ -42,28 +71,40 @@
 
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-const stripe = Stripe("{{ stripePublicKey }}");
+function initStripeButtons() {
+    const stripe = Stripe("{{ stripePublicKey|default('') }}");
 
-document.querySelectorAll('.stripe-checkout-course').forEach(form => {
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        fetch(form.action, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.id) {
-                stripe.redirectToCheckout({ sessionId: data.id });
-            } else if (data.error) {
-                alert(data.error);
+    document.querySelectorAll('.stripe-form').forEach(form => {
+        const button = form.querySelector('button[type="button"]');
+        if (!button) return;
+
+        button.replaceWith(button.cloneNode(true));
+        const newButton = form.querySelector('button[type="button"]');
+
+        newButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await res.json();
+                if (data.id) {
+                    await stripe.redirectToCheckout({ sessionId: data.id });
+                } else if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("Erreur inconnue lors de la création de la session Stripe.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la communication avec le serveur.");
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Erreur lors de la création de la session Stripe.");
         });
     });
-});
+}
+
+document.addEventListener('DOMContentLoaded', initStripeButtons);
+document.addEventListener('turbo:load', initStripeButtons);
 </script>
 {% endblock %}

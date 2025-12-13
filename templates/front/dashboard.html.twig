@@ -1,45 +1,77 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Tableau de bord{% endblock %}
 
 {% block body %}
 <div class="container my-5">
-    <h1 class="text-primary text-center mb-4">📚 Dashboard de {{ user.email }}</h1>
+    <h1 class="text-primary text-center mb-4">📚 Tableau de bord {{ user.email }}</h1>
 
-    {% set hasPurchasedCourses = false %}
+    {% set hasAnyPurchased = false %}
 
-    {% if themes is defined and themes|length > 0 %}
-        {% for theme in themes %}
-            {% set accessibleCourses = theme.accessibleCourses|default([]) %}
-            
-            {% set purchasedCourses = accessibleCourses|filter(c => c.hasAccess) %}
-            
-            {% if purchasedCourses|length > 0 %}
-                {% set hasPurchasedCourses = true %}
-                <h2 class="mt-4">{{ theme.name }}</h2>
-                <div class="row g-3">
-                    {% for courseWrapper in purchasedCourses %}
-                        {% set course = courseWrapper.entity %}
+    {% for theme in themes %}
+        {% set purchasedCourses = [] %}
+        {% set purchasedLessons = [] %}
+
+        {# On filtre uniquement les cours et leçons achetés #}
+        {% for courseWrapper in theme.accessibleCourses %}
+            {% if courseWrapper.hasAccess %}
+                {% set purchasedCourses = purchasedCourses|merge([courseWrapper]) %}
+            {% else %}
+                {% set lessonsBought = courseWrapper.lessons|filter(lw => lw.hasAccess) %}
+                {% if lessonsBought|length > 0 %}
+                    {% set purchasedLessons = purchasedLessons|merge([{
+                        'course': courseWrapper.entity,
+                        'lessons': lessonsBought
+                    }]) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% if purchasedCourses|length > 0 or purchasedLessons|length > 0 %}
+            {% set hasAnyPurchased = true %}
+            <h2 class="mt-4">{{ theme.name }}</h2>
+            <div class="row g-3">
+
+                {# Cours complets achetés #}
+                {% for courseWrapper in purchasedCourses %}
+                    {% set course = courseWrapper.entity %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <h5 class="card-title">{{ course.title }}</h5>
+                                <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
+                                <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mt-3">
+                                    Consulter le cours
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {# Leçons individuelles achetées #}
+                {% for item in purchasedLessons %}
+                    {% set course = item.course %}
+                    {% for lessonWrapper in item.lessons %}
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-body d-flex flex-column justify-content-between">
-                                    <h5 class="card-title">{{ course.title }}</h5>
-                                    <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
-                                    <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mt-3">
-                                        Voir les leçons
+                                    <h5 class="card-title">{{ lessonWrapper.entity.title }}</h5>
+                                    <p class="card-text"><strong>Cours :</strong> {{ course.title }}</p>
+                                    <a href="{{ path('front_lesson_show', {'id': lessonWrapper.entity.id}) }}" class="btn btn-success w-100 mt-3">
+                                        Consulter la leçon
                                     </a>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
-                </div>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endfor %}
 
-    {% if not hasPurchasedCourses %}
+    {% if not hasAnyPurchased %}
         <div class="alert alert-info text-center mt-2">
-            Vous n'avez encore acheté aucun cours.
+            Vous n'avez encore acheté aucun cours ni leçon.
         </div>
     {% endif %}
 
