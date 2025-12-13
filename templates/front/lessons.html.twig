@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Leçon : {{ lesson.title }}
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="card shadow-sm rounded-3 mb-4 p-4">
+        <h1 class="h4 text-primary mb-3">📘 Leçon : {{ lesson.title }}</h1>
+
+        {% if lesson.content %}
+            <section class="mt-3">
+                <div>{{ lesson.content|raw }}</div>
+            </section>
+        {% else %}
+            <p class="text-muted mt-3">Aucun contenu disponible pour cette leçon.</p>
+        {% endif %}
+
+        {% if lesson.videoUrl %}
+            <section class="mt-4">
+                <h3>Vidéo :</h3>
+                {% set cleanUrl = lesson.videoUrl|split('&')[0] %}
+                {% set embedUrl = cleanUrl
+                    | replace({'https://www.youtube.com/watch?v=': 'https://www.youtube.com/embed/'})
+                    | replace({'https://youtu.be/': 'https://www.youtube.com/embed/'}) %}
+                <div class="ratio ratio-16x9 mt-2">
+                    <iframe src="{{ embedUrl }}" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </section>
+        {% endif %}
+
+        {% if hasValidated %}
+            <p class="text-success fw-bold mt-3">✅ Cette leçon est validée</p>
+        {% else %}
+            <form action="{{ path('front_lesson_validate', {'id': lesson.id}) }}" method="POST" class="mt-3">
+                <button type="submit" class="btn btn-success w-100">Valider la leçon</button>
+            </form>
+        {% endif %}
+
+        <a href="{{ path('front_dashboard') }}" class="btn btn-secondary mt-4 w-100">← Retour au tableau de bord</a>
+    </div>
+</div>
+{% endblock %}

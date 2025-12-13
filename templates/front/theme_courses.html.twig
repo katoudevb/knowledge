@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cours pour le thème : {{ theme.name }}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="text-primary text-center mb-4">📚 Cours pour le thème : {{ theme.name }}</h1>
+
+    {# Set default values for purchased lessons and courses #}
+    {% set purchasedLessonIdsByCourse = purchasedLessonIdsByCourse|default({}) %}
+    {% set purchasedCourses = purchasedCourses|default([]) %}
+
+    {% if theme.courses|length > 0 %}
+        <div class="row g-3">
+            {% for course in theme.courses %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm mb-3">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="card-text"><strong>Prix du cours :</strong> {{ course.price }} €</p>
+
+                            {# Determine purchased lessons and course status #}
+                            {% set purchasedLessonIds = purchasedLessonIdsByCourse[course.id]|default([]) %}
+                            {% set coursePurchased = course.id in purchasedCourses %}
+                            {% set anyLessonPurchased = purchasedLessonIds|length > 0 %}
+                            {% set allLessonsPurchased = course.lessons|length > 0 and course.lessons|length == purchasedLessonIds|length %}
+
+                            {# Display lessons with appropriate buttons #}
+                            {% for lesson in course.lessons %}
+                                <div class="mb-2">
+                                    {% if lesson.id in purchasedLessonIds or coursePurchased %}
+                                        <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mb-1">
+                                            Consulter la leçon {{ lesson.title }}
+                                        </a>
+                                    {% else %}
+                                        <strong>{{ lesson.title }}</strong>
+                                        <form class="stripe-form mt-1"
+                                              action="{{ path('stripe_checkout_lesson', {'id': lesson.id}) }}"
+                                              method="POST" data-turbo="false">
+                                            <button type="button" class="btn btn-primary w-100">
+                                                Acheter la leçon - {{ lesson.price }} €
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+
+                            {# Display "Buy full course" button only if no lesson purchased and course not purchased #}
+                            {% if not coursePurchased and not anyLessonPurchased %}
+                                <form class="stripe-form mt-2"
+                                      action="{{ path('stripe_checkout_course', {'id': course.id}) }}"
+                                      method="POST" data-turbo="false">
+                                    <button type="button" class="btn btn-secondary w-100">
+                                        Acheter le cours complet - {{ course.price }} €
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            Aucun cours disponible pour ce thème pour le moment.
+        </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+function initStripeButtons() {
+    const stripe = Stripe("{{ stripePublicKey|default('') }}");
+
+    document.querySelectorAll('.stripe-form').forEach(form => {
+        const button = form.querySelector('button[type="button"]');
+        if (!button) return;
+
+        button.replaceWith(button.cloneNode(true));
+        const newButton = form.querySelector('button[type="button"]');
+
+        newButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                {# Create checkout session via AJAX #}
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await res.json();
+                if (data.id) {
+                    await stripe.redirectToCheckout({ sessionId: data.id });
+                } else if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("Erreur inconnue lors de la création de la session Stripe.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la communication avec le serveur.");
+            }
+        });
+    });
+}
+
+// ✅ Fix to make Stripe buttons work immediately after login
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initStripeButtons, 50);
+});
+document.addEventListener('turbo:load', () => {
+    setTimeout(initStripeButtons, 50);
+});
+</script>
+{% endblock %}

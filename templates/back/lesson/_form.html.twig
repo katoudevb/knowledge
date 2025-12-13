@@ -1,0 +1,8 @@
+{{ form_start(form) }}
+    {{ form_widget(form) }}
+    
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+        <a href="{{ path(app.request.get('_route')|replace({'_new':'_index','_edit':'_index'})) }}" class="btn btn-secondary">Annuler</a>
+    </div>
+{{ form_end(form) }}

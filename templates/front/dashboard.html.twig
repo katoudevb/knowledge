@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="text-primary text-center mb-4">📖 Tableau de bord {{ user.email }}</h1>
+
+    {# Flag to check if the user has purchased any course or lesson #}
+    {% set hasAnyPurchased = false %}
+
+    {% for theme in themes %}
+        {% set purchasedCourses = [] %}
+        {% set purchasedLessons = [] %}
+
+        {# Filter full courses and individually purchased lessons #}
+        {% for courseWrapper in theme.accessibleCourses %}
+            {% set lessonsBought = courseWrapper.lessons|filter(lw => lw.hasAccess) %}
+            {% if courseWrapper.hasAccess %}
+                {% set purchasedCourses = purchasedCourses|merge([{
+                    'entity': courseWrapper.entity,
+                    'lessons': lessonsBought
+                }]) %}
+            {% elseif lessonsBought|length > 0 %}
+                {% set purchasedCourses = purchasedCourses|merge([{
+                    'entity': courseWrapper.entity,
+                    'lessons': lessonsBought
+                }]) %}
+            {% endif %}
+        {% endfor %}
+
+        {% if purchasedCourses|length > 0 %}
+            {% set hasAnyPurchased = true %}
+            <h2 class="mt-4">{{ theme.name }}</h2>
+            <div class="row g-3">
+
+                {% for courseItem in purchasedCourses %}
+                    {% set course = courseItem.entity %}
+                    {% set lessonsBought = courseItem.lessons %}
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <h5 class="card-title">{{ course.title }}</h5>
+                                <p class="card-text"><strong>Prix :</strong> {{ course.price }} €</p>
+
+                                {# Always show "View Course" button #}
+                                <a href="{{ path('front_course_show', {'id': course.id}) }}" class="btn btn-success w-100 mt-3">
+                                    Consulter le cours
+                                </a>
+
+                                {# Show list of purchased lessons only if the full course is not purchased #}
+                                {% if lessonsBought|length > 0 and lessonsBought|length < course.lessons|length %}
+                                    <ul class="list-group mt-2">
+                                        {% for lessonWrapper in lessonsBought %}
+                                            <li class="list-group-item">{{ lessonWrapper.entity.title }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    {# Show message if the user has not purchased any course or lesson #}
+    {% if not hasAnyPurchased %}
+        <div class="alert alert-info text-center mt-2">
+            Vous n'avez encore acheté aucun cours ni leçon.
+        </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{{ path('front_themes') }}" class="btn btn-secondary">← Retour aux thèmes</a>
+        <a href="{{ path('front_certifications') }}" class="btn btn-success ms-2">🏆 Mes Certifications</a>
+    </div>
+</div>
+{% endblock %}

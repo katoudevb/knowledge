@@ -1,0 +1,18 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Modifier utilisateur{% endblock %}
+
+{% block page_title %}Modifier un utilisateur{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Formulaire de modification</h2>
+
+    {{ include('back/user/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+
+    <div class="mt-3 d-flex gap-2">
+        <a href="{{ path('admin_user_index') }}" class="btn btn-secondary">← Retour à la liste</a>
+        {{ include('back/user/_delete_form.html.twig') }}
+    </div>
+</div>
+{% endblock %}

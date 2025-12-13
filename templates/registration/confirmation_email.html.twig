@@ -1,0 +1,19 @@
+<div style="font-family: 'Arial', sans-serif; color: #384050; line-height: 1.6; padding: 20px; max-width: 600px; margin: auto; background-color: #f1f8fc; border: 1px solid #ddd; border-radius: 8px;">
+    <h1 style="color: #00497c; text-align: center;">Bonjour {{ user.email }} !</h1>
+
+    <p>Merci de confirmer votre adresse e-mail en cliquant sur le bouton ci-dessous :</p>
+
+    <p style="text-align: center; margin: 30px 0;">
+        <a href="{{ signedUrl|raw }}" 
+           style="display: inline-block; padding: 10px 20px; font-weight: bold; color: #fff; background-color: #6c757d; text-decoration: none; border-radius: 5px;">
+            Confirmer mon e-mail
+        </a>
+    </p>
+
+    <p>
+        Ce lien expirera dans 24 heures.
+    </p>
+
+    <p>Cordialement,<br>
+    <strong>Knowledge Learning</strong></p>
+</div>

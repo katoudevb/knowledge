@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Thèmes disponibles{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="text-primary text-center mb-4">📚 Thèmes disponibles</h1>
+
+    {% if themes is not empty %}
+        <div class="row g-3">
+            {% for theme in themes %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title">{{ theme.name }}</h5>
+                            {% if theme.description is defined %}
+                                <p class="card-text">{{ theme.description }}</p>
+                            {% endif %}
+                            <a href="{{ path('front_theme_courses', {'themeId': theme.id}) }}" class="btn btn-primary mt-2">Voir le thème</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-muted">Aucun thème disponible pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Gestion des Cours{% endblock %}
+{% block page_title %}Liste des Cours{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Cours disponibles</h2>
+        <a href="{{ path('admin_course_new') }}" class="btn btn-primary">➕ Ajouter un cours</a>
+    </div>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Titre</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for course in courses %}
+            <tr>
+                <td>{{ course.id }}</td>
+                <td>{{ course.title }}</td>
+                <td class="d-flex gap-2">
+                    <a href="{{ path('admin_course_show', {id: course.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                    <a href="{{ path('admin_course_edit', {id: course.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                    <form method="post" action="{{ path('admin_course_delete', {id: course.id}) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce cours ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ course.id) }}">
+                        <button class="btn btn-sm btn-danger">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="3" class="text-center">Aucun cours trouvé.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

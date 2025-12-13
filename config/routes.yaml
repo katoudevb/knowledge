@@ -3,3 +3,13 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+
+validate_lesson:
+    path: /validate-lesson/{id}
+    controller: App\Controller\LessonController::validate
+    methods: [POST]
+
+front_purchase:
+    path: /purchase
+    controller: App\Controller\FrontController::purchase

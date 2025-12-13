@@ -1,0 +1,53 @@
+{% extends 'back/base.html.twig' %}
+
+{% block title %}Liste des leçons{% endblock %}
+{% block page_title %}Gestion des leçons{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm rounded-3 p-4 my-4">
+    <h2 class="h5 mb-3">Liste des leçons</h2>
+
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Id</th>
+                <th>Titre</th>
+                <th>Prix</th>
+                <th>Contenu</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for lesson in lessons %}
+            <tr>
+                <td>{{ lesson.id }}</td>
+                <td>{{ lesson.title }}</td>
+                <td>{{ lesson.price }} €</td>
+                <td>
+                    {% if lesson.content %}
+                        {# Display a 50-character summary #}
+                        {{ lesson.content|striptags|length > 50 ? lesson.content|striptags|slice(0, 50) ~ '...' : lesson.content|striptags }}
+                    {% elseif lesson.videoUrl %}
+                        {# Link to view the video #}
+                        <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}">Voir la vidéo</a>
+                    {% else %}
+                        {# No content available #}
+                        <p class="text-muted">Aucun contenu disponible.</p>
+                    {% endif %}
+                </td>
+                <td class="d-flex gap-2">
+                    <a href="{{ path('admin_lesson_show', {'id': lesson.id}) }}" class="btn btn-primary btn-sm">Voir</a>
+                    <a href="{{ path('admin_lesson_edit', {'id': lesson.id}) }}" class="btn btn-secondary btn-sm">Modifier</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center">Aucune leçon trouvée</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('admin_lesson_new') }}" class="btn btn-success mt-3">Créer une nouvelle leçon</a>
+</div>
+{% endblock %}
