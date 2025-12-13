@@ -6,6 +6,7 @@
 <div class="container my-5">
     <h1 class="text-primary text-center mb-4">📚 Cours pour le thème : {{ theme.name }}</h1>
 
+    {# Set default values for purchased lessons and courses #}
     {% set purchasedLessonIdsByCourse = purchasedLessonIdsByCourse|default({}) %}
     {% set purchasedCourses = purchasedCourses|default([]) %}
 
@@ -18,15 +19,16 @@
                             <h5 class="card-title">{{ course.title }}</h5>
                             <p class="card-text"><strong>Prix du cours :</strong> {{ course.price }} €</p>
 
+                            {# Determine purchased lessons and course status #}
                             {% set purchasedLessonIds = purchasedLessonIdsByCourse[course.id]|default([]) %}
                             {% set coursePurchased = course.id in purchasedCourses %}
+                            {% set anyLessonPurchased = purchasedLessonIds|length > 0 %}
                             {% set allLessonsPurchased = course.lessons|length > 0 and course.lessons|length == purchasedLessonIds|length %}
 
-                            {# Affiche les leçons avec les boutons appropriés #}
+                            {# Display lessons with appropriate buttons #}
                             {% for lesson in course.lessons %}
-                                {% set hasLessonAccess = lesson.id in purchasedLessonIds %}
                                 <div class="mb-2">
-                                    {% if hasLessonAccess or coursePurchased %}
+                                    {% if lesson.id in purchasedLessonIds or coursePurchased %}
                                         <a href="{{ path('front_lesson_show', {'id': lesson.id}) }}" class="btn btn-success w-100 mb-1">
                                             Consulter la leçon {{ lesson.title }}
                                         </a>
@@ -43,8 +45,8 @@
                                 </div>
                             {% endfor %}
 
-                            {# Affiche le bouton pour acheter le cours complet uniquement si le cours n'est pas acheté et toutes les leçons ne sont pas achetées #}
-                            {% if not coursePurchased and not allLessonsPurchased %}
+                            {# Display "Buy full course" button only if no lesson purchased and course not purchased #}
+                            {% if not coursePurchased and not anyLessonPurchased %}
                                 <form class="stripe-form mt-2"
                                       action="{{ path('stripe_checkout_course', {'id': course.id}) }}"
                                       method="POST" data-turbo="false">
@@ -84,6 +86,7 @@ function initStripeButtons() {
         newButton.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
+                {# Create checkout session via AJAX #}
                 const res = await fetch(form.action, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -104,7 +107,12 @@ function initStripeButtons() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', initStripeButtons);
-document.addEventListener('turbo:load', initStripeButtons);
+// ✅ Fix to make Stripe buttons work immediately after login
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initStripeButtons, 50);
+});
+document.addEventListener('turbo:load', () => {
+    setTimeout(initStripeButtons, 50);
+});
 </script>
 {% endblock %}
