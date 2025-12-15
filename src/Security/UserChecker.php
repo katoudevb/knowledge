@@ -4,6 +4,7 @@ namespace App\Security;
 
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAccountStatusException;
 
 /**
@@ -31,7 +32,7 @@ class UserChecker implements UserCheckerInterface
         // Check if the email is verified
         if (!$user->isVerified()) {
             throw new CustomUserMessageAccountStatusException(
-                'Please verify your email before logging in.'
+                'Veuillez vérifier votre adresse e-mail avant de vous connecter.'
             );
         }
     }
@@ -40,9 +41,11 @@ class UserChecker implements UserCheckerInterface
      * Checks performed after authentication (post-auth).
      *
      * @param UserInterface $user The current user
+     * @param TokenInterface|null $token The authentication token (optional)
      */
-    public function checkPostAuth(UserInterface $user): void
+    public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
     {
         // No post-auth checks for now
+        // You can use $token here if needed in the future
     }
 }
