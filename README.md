@@ -78,7 +78,7 @@ Client :
 - Stockage sécurisé des mots de passe et protection CSRF
 
 ## Système d'achat 
-- Carte de payeemnt factice : 4242 4242 4242 4242
+- Carte de paiement factice : 4242 4242 4242 4242
 
 ## Licence
 
