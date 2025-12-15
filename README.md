@@ -49,6 +49,10 @@
     client@example.com
     Client123@
 
+- Base de données : 
+    knowledge_user
+    tzVz6j[IVUlAiEyZ
+
 ## Tests
 - Exécuter les tests unitaires et fonctionnels avec PHPUnit :
 
