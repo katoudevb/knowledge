@@ -41,17 +41,17 @@
 - Back-office (admin) : http://127.0.0.1:8000/admin
 
 # Accès à l'application 
-- Administrateur :
-    admin@example.com
-    Admin123@
+Administrateur :
+- ID admin@example.com
+- Admin123@
 
-- Client :
-    client@example.com
-    Client123@
+Client :
+- client@example.com
+- Client123@
 
-- Base de données : 
-    knowledge_user
-    tzVz6j[IVUlAiEyZ
+-Base de données : 
+- knowledge_user
+- tzVz6j[IVUlAiEyZ
 
 ## Tests
 - Exécuter les tests unitaires et fonctionnels avec PHPUnit :
