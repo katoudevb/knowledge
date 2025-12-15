@@ -40,10 +40,20 @@
 - Front-end : http://127.0.0.1:8000/
 - Back-office (admin) : http://127.0.0.1:8000/admin
 
+# Accès à l'application 
+- Administrateur :
+    admin@example.com
+    Admin123@
+
+- Client :
+    client@example.com
+    Client123@
+
 ## Tests
 - Exécuter les tests unitaires et fonctionnels avec PHPUnit :
 
 - php bin/phpunit
+- Fichier environnement : .env.test.local (contient les clés pour Stripe)
 
 - Les tests couvrent : l’inscription des utilisateurs, la connexion, les achats, la validation des leçons et les repositories.
 
@@ -58,10 +68,13 @@
 ## Fonctionnalités
 - Inscription et activation des comptes par email
 - Gestion des rôles (ROLE_ADMIN, ROLE_CLIENT)
-- Achat de cursus ou de leçons (mode sandbox)
+- Achat de cursus ou de leçons (mode sandbox avec Stripe)
 - Suivi de progression des leçons et génération de certifications
 - Front-end minimaliste pour la démonstration
 - Stockage sécurisé des mots de passe et protection CSRF
+
+## Système d'achat 
+- Carte de payeemnt factice : 4242 4242 4242 4242
 
 ## Licence
 
