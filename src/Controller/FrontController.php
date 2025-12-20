@@ -163,31 +163,33 @@ class FrontController extends AbstractController
      * @return Response Rendered lesson page with access info
      */
     #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
-    public function showLesson(Lesson $lesson, Request $request, PurchaseRepository $purchaseRepository): Response
-    {
+    #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
+    public function showLesson(
+        Lesson $lesson,
+        PurchaseRepository $purchaseRepository
+    ): Response {
         $user = $this->getCurrentUser();
 
-        if ($request->query->get('paid') == 1) {
-            $this->frontService->simulateSandboxPurchase($user, $lesson);
-        }
+        $hasAccess =
+            $this->frontService->userHasAccessToLesson($user, $lesson)
+            || $this->frontService->userHasAccessToCourse($user, $lesson->getCourse());
 
-        $hasAccess = $this->frontService->userHasAccessToLesson($user, $lesson);
-        $isCoursePurchased = $purchaseRepository->findOneBy([
-            'user' => $user,
-            'course' => $lesson->getCourse(),
-        ]) !== null;
+        if (!$hasAccess) {
+            $this->addFlash('error', 'Accès refusé');
+            return $this->redirectToRoute('front_course_show', [
+                'id' => $lesson->getCourse()->getId()
+            ]);
+        }
 
         return $this->render('front/lessons.html.twig', [
             'lesson' => $lesson,
-            'course' => $lesson->getCourse(),
             'hasAccess' => $hasAccess,
             'hasValidated' => $user->hasValidatedLesson($lesson),
-            'purchasedLessonIds' => $hasAccess ? [$lesson->getId()] : [],
-            'purchasedCourses' => $isCoursePurchased ? [$lesson->getCourse()->getId()] : [],
-            'isCoursePurchased' => $isCoursePurchased,
             'stripePublicKey' => $_ENV['STRIPE_PUBLIC_KEY'],
         ]);
     }
+
+
 
     /**
      * Display a course page with lessons
