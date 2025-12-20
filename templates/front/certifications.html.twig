@@ -11,10 +11,18 @@
         {% for certification in certifications %}
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
+
+                    <img
+                        src="{{ asset('images/certifications.jpg') }}"
+                        class="card-img-top p-2"
+                        alt="{{ certification.course.title }}"
+                        style="max-height: 140px; width: 100%; object-fit: contain;"
+                    >
+
                     <div class="card-body d-flex flex-column justify-content-between">
-                        <h5 class="card-title">{{ certification.course.title }}</h5>
+                        <h5 class="card-title">{{ certification.course.title }} ✅</h5>
                         <p class="card-text">
-                            Obtenue le : {{ certification.obtainedAt|date('d/m/Y') }}
+                            Obtenue le 📍: {{ certification.obtainedAt|date('d/m/Y') }}
                         </p>
                     </div>
                 </div>
