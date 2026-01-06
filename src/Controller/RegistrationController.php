@@ -15,6 +15,7 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
 
 /**
  * Controller responsible for user registration and email verification.
@@ -102,5 +103,27 @@ class RegistrationController extends AbstractController
         $this->addFlash('success', 'Votre adresse email a bien été vérifiée !');
 
         return $this->redirectToRoute('app_login');
+    }
+
+    #[Route('/dev/test-confirmation-email', name: 'dev_test_confirmation_email')]
+    public function testEmail(MailerInterface $mailer)
+    {
+        $fakeUser = new class {
+            public string $email = 'katiana.bricotteaux@outlook.com';
+        };
+
+        $email = (new TemplatedEmail())
+            ->from(new Address('bricotteaux@alwaysdata.net', 'Knowledge Learning'))
+            ->to($fakeUser->email)
+            ->subject('Test email confirmation')
+            ->htmlTemplate('registration/confirmation_email.html.twig')
+            ->context([
+                'user' => $fakeUser,
+                'signedUrl' => 'http://localhost:8000/verify/email?id=123&token=fake', // lien factice pour test
+            ]);
+
+        $mailer->send($email);
+
+        return new Response('Email de test envoyé ! Vérifie MailHog.');
     }
 }
