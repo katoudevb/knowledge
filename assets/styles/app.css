@@ -81,6 +81,25 @@ a:hover {
     overflow-x: auto;
 }
 
+/* ----- Footer ----- */
+footer {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+
+.footer-text {
+    font-size: 0.85rem;
+}
+
+.footer-link {
+    text-decoration: underline;
+    color: #f8f9fa;
+}
+
+.footer-link:hover {
+    color: #dcdcdc;
+}
+
 /* ----- Media Queries pour le responsive ----- */
 
 /* Écrans ≤ 992px (tablettes) */
