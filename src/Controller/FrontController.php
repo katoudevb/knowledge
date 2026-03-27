@@ -163,7 +163,6 @@ class FrontController extends AbstractController
      * @return Response Rendered lesson page with access info
      */
     #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
-    #[Route('/front/lesson/{id}', name: 'front_lesson_show')]
     public function showLesson(
         Lesson $lesson,
         PurchaseRepository $purchaseRepository
