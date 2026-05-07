@@ -87,4 +87,4 @@ Client :
 ### Auteur 
 - Nom : Kat
 - Rôle : Développeuse Web Full Stack
-- Projet académique : Conception et développement de la plateforme e-learning « Knowledge Learning »
+- Projet académique : Conception et développement de la plateforme e-learning « Knowledge Learning 

@@ -14,6 +14,16 @@ body {
     padding: 1rem;
 }
 
+/* ----- Logo header ----- */
+.navbar-brand {
+    margin-left: 0;
+    padding-left: 10px;
+}
+
+.logo-image {
+    height: 50px;
+}
+
 /* ----- Boutons personnalisés (override Bootstrap) ----- */
 .btn {
     display: inline-block;
@@ -137,7 +147,7 @@ footer {
         font-size: 0.9rem;
     }
 
-    header img {
+    .logo-image {
         max-width: 120px;
         height: auto;
     }
