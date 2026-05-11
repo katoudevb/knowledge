@@ -38,7 +38,7 @@ class RegistrationFormType extends AbstractType
             ->add('agreeTerms', CheckboxType::class, [
                 'mapped' => false, // Not mapped to the User entity
                 'constraints' => [
-                    new IsTrue(message: 'Vous devez accepter les conditions.'), // Validation: must be checked
+                    new IsTrue(message: 'Vous devez accepter les conditions.'),
                 ],
             ])
 
