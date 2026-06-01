@@ -20,10 +20,10 @@
 <body class="d-flex flex-column min-vh-100">
     {# --- Header --- #}
     <header class="bg-light shadow-sm">
-        <nav class="navbar navbar-expand-lg navbar-light container">
+        <nav class="navbar navbar-expand-lg navbar-light container-fluid">
             <a class="navbar-brand d-flex align-items-center" 
                href="{% if is_granted('ROLE_ADMIN') %}{{ path('admin_dashboard') }}{% else %}{{ path('app_home') }}{% endif %}">
-                <img src="{{ asset('images/knowledge.png') }}" alt="Logo" style="height: 50px;">
+                <img src="{{ asset('images/knowledge.png') }}" alt="Logo Knowledge du site" class="logo-image">
                 <span class="ms-2 fw-bold text-primary"></span>
             </a>
 

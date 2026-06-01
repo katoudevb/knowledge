@@ -38,7 +38,7 @@ class RegistrationFormType extends AbstractType
             ->add('agreeTerms', CheckboxType::class, [
                 'mapped' => false, // Not mapped to the User entity
                 'constraints' => [
-                    new IsTrue(message: 'Vous devez accepter les conditions.'), // Validation: must be checked
+                    new IsTrue(message: 'Vous devez accepter les conditions.'),
                 ],
             ])
 
@@ -48,7 +48,7 @@ class RegistrationFormType extends AbstractType
             'constraints' => [
                 new NotBlank(message: 'Veuillez entrer un mot de passe'),
                 new Length(
-                    min: 8,
+                    min: 12,
                     minMessage: 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
                     max: 4096
                 ),
